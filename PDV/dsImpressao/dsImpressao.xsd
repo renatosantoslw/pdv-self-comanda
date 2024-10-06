@@ -1,0 +1,33 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<xs:schema id="dsImpressao" targetNamespace="http://tempuri.org/dsImpressao.xsd" xmlns:mstns="http://tempuri.org/dsImpressao.xsd" xmlns="http://tempuri.org/dsImpressao.xsd" xmlns:xs="http://www.w3.org/2001/XMLSchema" xmlns:msdata="urn:schemas-microsoft-com:xml-msdata" xmlns:msprop="urn:schemas-microsoft-com:xml-msprop" attributeFormDefault="qualified" elementFormDefault="qualified">
+  <xs:annotation>
+    <xs:appinfo source="urn:schemas-microsoft-com:xml-msdatasource">
+      <DataSource DefaultConnectionIndex="0" FunctionsComponentName="QueriesTableAdapter" Modifier="AutoLayout, AnsiClass, Class, Public" SchemaSerializationMode="IncludeSchema" xmlns="urn:schemas-microsoft-com:xml-msdatasource">
+        <Connections />
+        <Tables />
+        <Sources />
+      </DataSource>
+    </xs:appinfo>
+  </xs:annotation>
+  <xs:element name="dsImpressao" msdata:IsDataSet="true" msdata:UseCurrentLocale="true" msprop:EnableTableAdapterManager="true" msprop:Generator_DataSetName="dsImpressao" msprop:Generator_UserDSName="dsImpressao">
+    <xs:complexType>
+      <xs:choice minOccurs="0" maxOccurs="unbounded">
+        <xs:element name="dtImpressao" msprop:Generator_TableClassName="dtImpressaoDataTable" msprop:Generator_TableVarName="tabledtImpressao" msprop:Generator_TablePropName="dtImpressao" msprop:Generator_RowDeletingName="dtImpressaoRowDeleting" msprop:Generator_RowChangingName="dtImpressaoRowChanging" msprop:Generator_RowEvHandlerName="dtImpressaoRowChangeEventHandler" msprop:Generator_RowDeletedName="dtImpressaoRowDeleted" msprop:Generator_UserTableName="dtImpressao" msprop:Generator_RowChangedName="dtImpressaoRowChanged" msprop:Generator_RowEvArgName="dtImpressaoRowChangeEvent" msprop:Generator_RowClassName="dtImpressaoRow">
+          <xs:complexType>
+            <xs:sequence>
+              <xs:element name="picLogo" msprop:Generator_ColumnVarNameInTable="columnpicLogo" msprop:Generator_ColumnPropNameInRow="picLogo" msprop:Generator_ColumnPropNameInTable="picLogoColumn" msprop:Generator_UserColumnName="picLogo" type="xs:base64Binary" minOccurs="0" />
+              <xs:element name="Nome" msprop:Generator_ColumnVarNameInTable="columnNome" msprop:Generator_ColumnPropNameInRow="Nome" msprop:Generator_ColumnPropNameInTable="NomeColumn" msprop:Generator_UserColumnName="Nome" type="xs:string" minOccurs="0" />
+              <xs:element name="Peso" msprop:Generator_ColumnVarNameInTable="columnPeso" msprop:Generator_ColumnPropNameInRow="Peso" msprop:Generator_ColumnPropNameInTable="PesoColumn" msprop:Generator_UserColumnName="Peso" type="xs:string" minOccurs="0" />
+              <xs:element name="Total" msprop:Generator_ColumnVarNameInTable="columnTotal" msprop:Generator_ColumnPropNameInRow="Total" msprop:Generator_ColumnPropNameInTable="TotalColumn" msprop:Generator_UserColumnName="Total" type="xs:string" minOccurs="0" />
+              <xs:element name="Unitario" msprop:Generator_ColumnVarNameInTable="columnUnitario" msprop:Generator_ColumnPropNameInRow="Unitario" msprop:Generator_ColumnPropNameInTable="UnitarioColumn" msprop:Generator_UserColumnName="Unitario" type="xs:string" minOccurs="0" />
+              <xs:element name="CodComanda" msprop:Generator_ColumnVarNameInTable="columnCodComanda" msprop:Generator_ColumnPropNameInRow="CodComanda" msprop:Generator_ColumnPropNameInTable="CodComandaColumn" msprop:Generator_UserColumnName="CodComanda" type="xs:string" minOccurs="0" />
+              <xs:element name="Rodape" msprop:Generator_ColumnVarNameInTable="columnRodape" msprop:Generator_ColumnPropNameInRow="Rodape" msprop:Generator_ColumnPropNameInTable="RodapeColumn" msprop:Generator_UserColumnName="Rodape" type="xs:string" minOccurs="0" />
+              <xs:element name="picCodComanda" msprop:Generator_ColumnVarNameInTable="columnpicCodComanda" msprop:Generator_ColumnPropNameInRow="picCodComanda" msprop:Generator_ColumnPropNameInTable="picCodComandaColumn" msprop:Generator_UserColumnName="picCodComanda" type="xs:base64Binary" minOccurs="0" />
+              <xs:element name="picCodComandaQR" msprop:Generator_ColumnVarNameInTable="columnpicCodComandaQR" msprop:Generator_ColumnPropNameInRow="picCodComandaQR" msprop:Generator_ColumnPropNameInTable="picCodComandaQRColumn" msprop:Generator_UserColumnName="picCodComandaQR" type="xs:base64Binary" minOccurs="0" />
+            </xs:sequence>
+          </xs:complexType>
+        </xs:element>
+      </xs:choice>
+    </xs:complexType>
+  </xs:element>
+</xs:schema>
