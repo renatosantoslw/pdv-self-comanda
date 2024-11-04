@@ -30,10 +30,12 @@ Este aplicativo de self-checkout personalizado que se integra com o sistema ERP 
 * [Video 1][video1]
 * [Video 2][video2]
 * [Video 3][video3]
+* [Demonstração][video4]
 
 [video1]: https://www.youtube.com/shorts/UTSa3QQiRN4
 [video2]: https://www.youtube.com/watch?v=fRAMCDHtf0k
 [video3]: https://www.youtube.com/watch?v=-HRn50LgclY
+[video4]: https://www.youtube.com/watch?v=YwozBxSe4CQ
 [jnmoura]: https://jnmoura.com.br/pt-br/
 [sismoura]: https://sismoura.com.br/
 
