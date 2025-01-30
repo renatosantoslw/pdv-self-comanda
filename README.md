@@ -3,9 +3,9 @@
 Self-checkout automatizado com balança e auto-atendimento
 
 ## Sobre
-Aplicativo para restaurante self-service com auto-atendimento integrado ao Sistema ERP [JN MOURA][jnmoura] - [SISMOURA][sismoura] para detecção de peso na balança, pesagem, impressão e registro de comanda eletrônica automatizado.
+Aplicativo para restaurante self-service com auto-atendimento. Pode ser integrado aos Sistemas ERP [JN MOURA][jnmoura] - [SISMOURA][sismoura] e [Sischef][sischef] para detecção de peso na balança, pesagem, impressão e registro de comanda eletrônica automatizado.
 ## Notas
-Este aplicativo de self-checkout personalizado que se integra com o sistema ERP [SISMOURA][sismoura] foi desenvolvido para atender um cliente em especifico. Este aplicativo foi criado de forma independente, sem qualquer vínculo com a empresa [JN MOURA][jnmoura]. Embora ele tenha sido projetado para se integrar a plataforma de ERP específico, sua concepção, desenvolvimento e suporte são de minha total responsabilidade. 
+Este aplicativo de self checkout personalizado que se integra com os sistemas ERP [SISMOURA][sismoura] e [Sischef][sischef] foi desenvolvido para atender um cliente em especifico. Este aplicativo foi criado de forma independente, sem qualquer vínculo com as empresas [JN MOURA][jnmoura] e [Sischef][sischef]. Embora ele tenha sido projetado para se integrar a plataforma de ERP específico, sua concepção, desenvolvimento e suporte são de minha total responsabilidade. 
 
 ## Instalação
 
@@ -30,13 +30,17 @@ Este aplicativo de self-checkout personalizado que se integra com o sistema ERP 
 * [Video 1][video1]
 * [Video 2][video2]
 * [Video 3][video3]
+* [Video 5][video5]
 * [Demonstração][video4]
 
 [video1]: https://www.youtube.com/shorts/UTSa3QQiRN4
 [video2]: https://www.youtube.com/watch?v=fRAMCDHtf0k
 [video3]: https://www.youtube.com/watch?v=-HRn50LgclY
 [video4]: https://www.youtube.com/watch?v=YwozBxSe4CQ
+[video5]: https://youtube.com/shorts/ZyTrJM7rROM
+
 [jnmoura]: https://jnmoura.com.br/pt-br/
 [sismoura]: https://sismoura.com.br/
+[sischef]: https://sischef.com/
 
 
