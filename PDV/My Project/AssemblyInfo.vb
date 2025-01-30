@@ -10,9 +10,9 @@ Imports System.Runtime.InteropServices
 
 <Assembly: AssemblyTitle("PDV - Selfcomanda Add-in")>
 <Assembly: AssemblyDescription("SelfComanda Add-in")>
-<Assembly: AssemblyCompany("carlos-renato@hotmail.com - (68)98427-8091 - 2024")>
+<Assembly: AssemblyCompany("carlos-renato@hotmail.com - (68)98427-8091 - 2025")>
 <Assembly: AssemblyProduct("Selfcomanda")>
-<Assembly: AssemblyCopyright("carlos-renato@hotmail.com - (68)98427-8091 - 2024")>
+<Assembly: AssemblyCopyright("carlos-renato@hotmail.com - (68)98427-8091 - 2025")>
 <Assembly: AssemblyTrademark("")>
 
 <Assembly: ComVisible(False)>

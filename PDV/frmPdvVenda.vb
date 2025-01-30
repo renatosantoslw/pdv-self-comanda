@@ -42,17 +42,34 @@ Public Class frmPdvVenda
 
     Public Sub ConsultarProduto(ByVal strCodProduto_p As String)
 
-        Try
-            frmPrincipal.FormularioPdvVenda.frmSelecionarP.Visible = False
-            frmPrincipal.FormularioPdvVenda.txtCodBarra.Visible = True
-            frmPrincipal.FormularioPdvVenda.picEstado.Visible = True
+        If Parametros.strSistemaIntegrado = "Sischef" Then
+            Try
+                frmPrincipal.FormularioPdvVenda.frmSelecionarP.Visible = False
+                frmPrincipal.FormularioPdvVenda.txtCodBarra.Visible = True
+                frmPrincipal.FormularioPdvVenda.picEstado.Visible = True
 
-            SQLControl.ConsultarProduto(strCodProduto_p, Produto, "frmPdvVenda")
-            lblNomeProduto.Text = Produto.Codigo + " - " + frmPrincipal.FormularioPdvVenda.Produto.Nome + " (R$ " + CType(frmPrincipal.FormularioPdvVenda.Produto.Preco_Produto, Decimal).ToString("#,##0.00") + ")"
+                SQLControl.ConsultarProdutoPostgres(strCodProduto_p, Produto, "frmPdvVenda")
+                lblNomeProduto.Text = Produto.Codigo + " - " + frmPrincipal.FormularioPdvVenda.Produto.Nome + " (R$ " + CType(frmPrincipal.FormularioPdvVenda.Produto.Preco_Produto, Decimal).ToString("#,##0.00") + ")"
 
-        Catch ex As Exception
-            LogApp.GerarLogErro(ex, "frmPdvVenda", "ConsultarProduto: " + strCodProduto_p)
-        End Try
+            Catch ex As Exception
+                LogApp.GerarLogErro(ex, "frmPdvVenda", "ConsultarProduto: " + strCodProduto_p)
+            End Try
+        End If
+
+
+        If Parametros.strSistemaIntegrado = "Sismoura" Then
+            Try
+                frmPrincipal.FormularioPdvVenda.frmSelecionarP.Visible = False
+                frmPrincipal.FormularioPdvVenda.txtCodBarra.Visible = True
+                frmPrincipal.FormularioPdvVenda.picEstado.Visible = True
+
+                SQLControl.ConsultarProduto(strCodProduto_p, Produto, "frmPdvVenda")
+                lblNomeProduto.Text = Produto.Codigo + " - " + frmPrincipal.FormularioPdvVenda.Produto.Nome + " (R$ " + CType(frmPrincipal.FormularioPdvVenda.Produto.Preco_Produto, Decimal).ToString("#,##0.00") + ")"
+
+            Catch ex As Exception
+                LogApp.GerarLogErro(ex, "frmPdvVenda", "ConsultarProduto: " + strCodProduto_p)
+            End Try
+        End If
 
         'Debug.Print("frmPdvVenda : Public Sub ConsultarProduto: " + strCodProduto_p)
     End Sub
@@ -112,8 +129,9 @@ Public Class frmPdvVenda
 
             strDadosPortaSerial = String.Empty
 
-            Tratar_Peso_Normal()
-
+            'Tratar_Peso_Normal()
+            Tratar_Loja1()
+            'Tratar_Loja2()
         Catch ex As Exception
             LogApp.GerarLogErro(ex, "frmPdvVenda", "Serial_DataReceived: " + strDadosPortaSerial)
         End Try
@@ -203,8 +221,20 @@ Public Class frmPdvVenda
             SplitContainer1.Visible = True
             SplitContainer2.Visible = True
 
-            SQLControl.ConsultarProduto(Parametros.strCodProduto, Produto, "frmPdvVenda - Load")
-            lblNomeProduto.Text = Produto.Codigo + " - " + Produto.Nome + " (R$ " + CType(Produto.Preco_Produto, Decimal).ToString("#,##0.00") + ")"
+            If Parametros.strSistemaIntegrado = "Sischef" Then
+                SQLControl.ConsultarProdutoPostgres(Parametros.strCodProduto, Produto, "frmPdvVenda - Load")
+                lblNomeProduto.Text = Produto.Codigo + " - " + Produto.Nome + " (R$ " + CType(Produto.Preco_Produto, Decimal).ToString("#,##0.00") + ")"
+
+            End If
+
+
+            If Parametros.strSistemaIntegrado = "Sismoura" Then
+                SQLControl.ConsultarProduto(Parametros.strCodProduto, Produto, "frmPdvVenda - Load")
+                lblNomeProduto.Text = Produto.Codigo + " - " + Produto.Nome + " (R$ " + CType(Produto.Preco_Produto, Decimal).ToString("#,##0.00") + ")"
+
+            End If
+
+
 
             'INICIALIZAR frmSelecionarP
             With frmSelecionarP
@@ -284,14 +314,29 @@ Public Class frmPdvVenda
     'TRATAMENTO DE PESO NORMAL POR KG
     Sub Tratar_Peso_Normal()
 
-        If SQLControl.Testar_Conn("frmPdvVenda - Tratar_Peso") = False Then
-            Display("Banco de dados", "Sem Conexão.")
+        If Parametros.strSistemaIntegrado = "Sischef" Then
+            If SQLControl.Testar_ConnPostgres("frmPdvVenda - Tratar_Peso") = False Then
+                Display("Banco de dados", "Sem Conexão.")
 
-            SyncLock picEstado
-                picEstado.Image = imgColoque
-            End SyncLock
-            Exit Sub
+                SyncLock picEstado
+                    picEstado.Image = imgColoque
+                End SyncLock
+                Exit Sub
+            End If
         End If
+
+
+        If Parametros.strSistemaIntegrado = "Sismoura" Then
+            If SQLControl.Testar_Conn("frmPdvVenda - Tratar_Peso") = False Then
+                Display("Banco de dados", "Sem Conexão.")
+
+                SyncLock picEstado
+                    picEstado.Image = imgColoque
+                End SyncLock
+                Exit Sub
+            End If
+        End If
+
 
         Try
             If intContadorLeitura_Estado_N > 0 Or CType(strDadosPortaSerial_Peso, Decimal) = "0000" Then
@@ -329,164 +374,12 @@ Public Class frmPdvVenda
             LogApp.GerarLogErro(ex, "frmPdvVenda", "If intContadorLeitura_Peso = 1 And CType(strDadosPortaSerial_Peso, Decimal) > 00000")
         End Try
 
-        Try
-            If intContadorLeitura_Peso = 4 And CType(strDadosPortaSerial_Peso, Decimal) > "00000" Then
 
-                If CType(strDadosPortaSerial_Peso, Decimal) > "0000" Then
+        If Parametros.strSistemaIntegrado = "Sischef" Then
+            Try
+                If intContadorLeitura_Peso = 4 And CType(strDadosPortaSerial_Peso, Decimal) > "00000" Then
 
-#Region "PARAMETROS - CODIGO COMANDA"
-
-                    'Dim strCodComandaDHMS As String = Format(Now, "ddhhmmss")
-                    Dim strCodComandaDHMS As String = String.Empty
-
-                    If Parametros.strPrefixoComanda = "Nenhum" Then
-                        Parametros.strPrefixoComanda = ""
-                    End If
-
-                    If Parametros.strModoAuto = "Dia - Hora - Min - Seg" Then
-                        strCodComandaDHMS = Format(Now, "ddHHmmss")
-                    End If
-
-                    If Parametros.strModoAuto = "Sequencial" Then
-                        If ComandaAtivaCodigo = String.Empty Then
-                            strCodComandaDHMS = SQLControl.GetCodigoUltimaComanda_Config("frmPdvVenda - Tratar_Peso")
-
-                            If strCodComandaDHMS = "0" Or strCodComandaDHMS = "" Or strCodComandaDHMS = String.Empty Then
-                                strCodComandaDHMS = "1"
-                            End If
-                        End If
-                    End If
-
-                    If ComandaAtivaCodigo <> String.Empty Then
-                        strCodComandaDHMS = ComandaAtivaCodigo
-                    End If
-#End Region
-
-                    Dim dValor As Decimal = Produto.Preco_Produto
-                    Dim dQtd As Decimal = CType(strDadosPortaSerial_Peso, Decimal) / 1000
-                    Dim dResultado As Decimal = dQtd * dValor
-
-                    Display(
-                dQtd.ToString("#,###0.000"),
-                dResultado.ToString("#,##0.00"))
-
-                    Dim strdQtd_IMP As String = "(" + dQtd.ToString("#,###0.000") + "Kg)"
-                    Dim strdResultado_IMP As String = "R$ " + dResultado.ToString("#,##0.00")
-
-
-                    If SQLControl.InserirComanda(
-                                             Produto.Codigo,
-                                             Parametros.strCodEmpresa,
-                                             Parametros.strCodDeposito,
-                                             Parametros.strCodVendedor,
-                                             dQtd,
-                                             Produto.Preco_Produto,
-                                             dResultado,
-                                             Parametros.strPrefixoComanda + strCodComandaDHMS,
-                                             "1") = True Then
-                        ' Parametros.strPrefixoComanda +strCodComandaDHMS
-
-
-                        SQLControl.InserirComanda_s(
-                                                Produto.Codigo,
-                                                Parametros.strCodEmpresa,
-                                                Parametros.strCodDeposito,
-                                                Parametros.strCodVendedor,
-                                                dQtd,
-                                                Produto.Preco_Produto,
-                                                dResultado,
-                                                Parametros.strPrefixoComanda + strCodComandaDHMS,
-                                                "1")
-                        'Parametros.strPrefixoComanda + strCodComandaDHMS
-
-                        Impressao.Imprimir(
-                                       Parametros.strPrefixoComanda + strCodComandaDHMS,
-                                       Produto.Nome,
-                                       strdQtd_IMP,
-                                       strdResultado_IMP,
-                                       Parametros.strImpCodBarr,
-                                       Parametros.strImpQRCod,
-                                       Parametros.strImpLogo,
-                                       False
-                                      )
-
-                    Else
-                        Application.Restart()
-                    End If
-
-                    picEstado.Image = imgRetire
-                    DisplayLabel_Limpar()
-
-                    If Parametros.strVoltarPadrao = "SIM" Then
-                        wait(3000)
-                        SQLControl.ConsultarProduto(Parametros.strCodProduto, Produto, "frmPdvVenda - Tratar")
-                        DisplayLabelNomeProduto(Produto.Codigo + " - " + Produto.Nome + " (R$ " + CType(Produto.Preco_Produto, Double).ToString("#,##0.00") + ")")
-                    End If
-
-                End If
-
-            End If
-        Catch ex As Exception
-            LogApp.GerarLogErro(ex, "frmPdvVenda", "If intContadorLeitura_Peso = 2 And CType(strDadosPortaSerial_Peso, Decimal) > 00000")
-        End Try
-
-    End Sub
-
-    'TRATAMENTO DE PESO PERSONALIZADO POR TIPO DE ITEM
-    Sub Tratar_Loja1()
-
-        If SQLControl.Testar_Conn("frmPdvVenda - Tratar_Peso") = False Then
-            Display("Banco de dados", "Sem Conexão.")
-
-            SyncLock picEstado
-                picEstado.Image = imgColoque
-            End SyncLock
-            Exit Sub
-        End If
-
-        Try
-            If intContadorLeitura_Estado_N > 0 Or CType(strDadosPortaSerial_Peso, Decimal) = "0000" Then
-
-                Try
-
-                    SyncLock picEstado
-                        picEstado.Image = imgColoque
-                    End SyncLock
-
-                    Display("0,000", "0,00")
-                    'Debug.Print("frmpPdvVenda: tratar_intContadorLeitura_Estado_N > 3")
-                Catch ex As Exception
-                    LogApp.GerarLogErro(ex, "frmPdvVenda", "Tratar_Peso() - intContadorLeitura_Estado_N > 0 - picEstado.Image = imgColoque")
-                End Try
-
-
-            End If
-        Catch ex As Exception
-            LogApp.GerarLogErro(ex, "frmPdvVenda", "If intContadorLeitura_Estado_N > 0 Or CType(strDadosPortaSerial_Peso, Decimal) = 0000")
-        End Try
-
-        Try
-            If intContadorLeitura_Peso = 1 And CType(strDadosPortaSerial_Peso, Decimal) > "00000" Then
-
-                Try
-                    picEstado.Image = imgPesando
-                    Display("0,000", "0,00")
-                Catch ex As Exception
-                    LogApp.GerarLogErro(ex, "frmPdvVenda", "Tratar_Peso() - intContadorLeitura_Peso = 1 - picEstado.Image = imgPesando")
-                End Try
-
-            End If
-        Catch ex As Exception
-            LogApp.GerarLogErro(ex, "frmPdvVenda", "If intContadorLeitura_Peso = 1 And CType(strDadosPortaSerial_Peso, Decimal) > 00000")
-        End Try
-
-        Try
-            If intContadorLeitura_Peso = 4 And CType(strDadosPortaSerial_Peso, Decimal) > "00000" Then
-
-                If lblNomeProduto.Text.Contains("CONVENIO") Then
-
-                    If CType(strDadosPortaSerial_Peso, Decimal) >= "00001" And
-                       CType(strDadosPortaSerial_Peso, Decimal) <= "00538" Then
+                    If CType(strDadosPortaSerial_Peso, Decimal) > "0000" Then
 
 #Region "PARAMETROS - CODIGO COMANDA"
 
@@ -503,7 +396,7 @@ Public Class frmPdvVenda
 
                         If Parametros.strModoAuto = "Sequencial" Then
                             If ComandaAtivaCodigo = String.Empty Then
-                                strCodComandaDHMS = SQLControl.GetCodigoUltimaComanda_Config("frmPdvVenda - Tratar_Peso")
+                                strCodComandaDHMS = SQLControl.GetCodigoUltimaComanda_ConfigPostgres("frmPdvVenda - Tratar_Peso")
 
                                 If strCodComandaDHMS = "0" Or strCodComandaDHMS = "" Or strCodComandaDHMS = String.Empty Then
                                     strCodComandaDHMS = "1"
@@ -515,9 +408,6 @@ Public Class frmPdvVenda
                             strCodComandaDHMS = ComandaAtivaCodigo
                         End If
 #End Region
-
-                        SQLControl.ConsultarProduto(Parametros.CodSelf4, Produto, "frmPdvVenda - Tratar")
-                        DisplayLabelNomeProduto(Produto.Codigo + " - " + Produto.Nome + " (R$ " + CType(Produto.Preco_Produto, Decimal).ToString("#,##0.00") + ")")
 
                         Dim dValor As Decimal = Produto.Preco_Produto
                         Dim dQtd As Decimal = CType(strDadosPortaSerial_Peso, Decimal) / 1000
@@ -530,6 +420,112 @@ Public Class frmPdvVenda
                         Dim strdQtd_IMP As String = "(" + dQtd.ToString("#,###0.000") + "Kg)"
                         Dim strdResultado_IMP As String = "R$ " + dResultado.ToString("#,##0.00")
 
+
+                        If SQLControl.InserirComandaPostgres(
+                                                 Produto.Codigo,
+                                                 Parametros.strCodEmpresa,
+                                                 Parametros.strCodDeposito,
+                                                 Parametros.strCodVendedor,
+                                                 dQtd,
+                                                 Produto.Preco_Produto,
+                                                 dResultado,
+                                                 Parametros.strPrefixoComanda + strCodComandaDHMS,
+                                                 "1") = True Then
+                            ' Parametros.strPrefixoComanda +strCodComandaDHMS
+
+
+                            SQLControl.InserirComanda_sPostgres(
+                                                    Produto.Codigo,
+                                                    Parametros.strCodEmpresa,
+                                                    Parametros.strCodDeposito,
+                                                    Parametros.strCodVendedor,
+                                                    dQtd,
+                                                    Produto.Preco_Produto,
+                                                    dResultado,
+                                                    Parametros.strPrefixoComanda + strCodComandaDHMS,
+                                                    "1")
+                            'Parametros.strPrefixoComanda + strCodComandaDHMS
+
+                            Impressao.Imprimir(
+                                           Parametros.strPrefixoComanda + strCodComandaDHMS,
+                                           Produto.Nome,
+                                           strdQtd_IMP,
+                                           strdResultado_IMP,
+                                           Parametros.strImpCodBarr,
+                                           Parametros.strImpQRCod,
+                                           Parametros.strImpLogo,
+                                           False
+                                          )
+
+
+                        Else
+                            Application.Restart()
+                        End If
+
+                        picEstado.Image = imgRetire
+                        DisplayLabel_Limpar()
+
+                        If Parametros.strVoltarPadrao = "SIM" Then
+                            wait(3000)
+                            SQLControl.ConsultarProdutoPostgres(Parametros.strCodProduto, Produto, "frmPdvVenda - Tratar")
+                            DisplayLabelNomeProduto(Produto.Codigo + " - " + Produto.Nome + " (R$ " + CType(Produto.Preco_Produto, Double).ToString("#,##0.00") + ")")
+                        End If
+
+                    End If
+
+                End If
+            Catch ex As Exception
+                LogApp.GerarLogErro(ex, "frmPdvVenda", "If intContadorLeitura_Peso = 2 And CType(strDadosPortaSerial_Peso, Decimal) > 00000")
+            End Try
+        End If
+
+
+        If Parametros.strSistemaIntegrado = "Sismoura" Then
+            Try
+                If intContadorLeitura_Peso = 4 And CType(strDadosPortaSerial_Peso, Decimal) > "00000" Then
+
+                    If CType(strDadosPortaSerial_Peso, Decimal) > "0000" Then
+
+#Region "PARAMETROS - CODIGO COMANDA"
+
+                        'Dim strCodComandaDHMS As String = Format(Now, "ddhhmmss")
+                        Dim strCodComandaDHMS As String = String.Empty
+
+                        If Parametros.strPrefixoComanda = "Nenhum" Then
+                            Parametros.strPrefixoComanda = ""
+                        End If
+
+                        If Parametros.strModoAuto = "Dia - Hora - Min - Seg" Then
+                            strCodComandaDHMS = Format(Now, "ddHHmmss")
+                        End If
+
+                        If Parametros.strModoAuto = "Sequencial" Then
+                            If ComandaAtivaCodigo = String.Empty Then
+                                strCodComandaDHMS = SQLControl.GetCodigoUltimaComanda_Config("frmPdvVenda - Tratar_Peso")
+
+                                If strCodComandaDHMS = "0" Or strCodComandaDHMS = "" Or strCodComandaDHMS = String.Empty Then
+                                    strCodComandaDHMS = "1"
+                                End If
+                            End If
+                        End If
+
+                        If ComandaAtivaCodigo <> String.Empty Then
+                            strCodComandaDHMS = ComandaAtivaCodigo
+                        End If
+#End Region
+
+                        Dim dValor As Decimal = Produto.Preco_Produto
+                        Dim dQtd As Decimal = CType(strDadosPortaSerial_Peso, Decimal) / 1000
+                        Dim dResultado As Decimal = dQtd * dValor
+
+                        Display(
+                        dQtd.ToString("#,###0.000"),
+                        dResultado.ToString("#,##0.00"))
+
+                        Dim strdQtd_IMP As String = "(" + dQtd.ToString("#,###0.000") + "Kg)"
+                        Dim strdResultado_IMP As String = "R$ " + dResultado.ToString("#,##0.00")
+
+
                         If SQLControl.InserirComanda(
                                                  Produto.Codigo,
                                                  Parametros.strCodEmpresa,
@@ -539,11 +535,12 @@ Public Class frmPdvVenda
                                                  Produto.Preco_Produto,
                                                  dResultado,
                                                  Parametros.strPrefixoComanda + strCodComandaDHMS,
-                                                 "1"
-                                                 ) = True Then
+                                                 "1") = True Then
+                            ' Parametros.strPrefixoComanda +strCodComandaDHMS
 
 
-                            SQLControl.InserirComanda_s(Produto.Codigo,
+                            SQLControl.InserirComanda_s(
+                                                    Produto.Codigo,
                                                     Parametros.strCodEmpresa,
                                                     Parametros.strCodDeposito,
                                                     Parametros.strCodVendedor,
@@ -551,8 +548,8 @@ Public Class frmPdvVenda
                                                     Produto.Preco_Produto,
                                                     dResultado,
                                                     Parametros.strPrefixoComanda + strCodComandaDHMS,
-                                                    "1"
-                                                    )
+                                                    "1")
+                            'Parametros.strPrefixoComanda + strCodComandaDHMS
 
                             Impressao.Imprimir(
                                            Parametros.strPrefixoComanda + strCodComandaDHMS,
@@ -561,313 +558,901 @@ Public Class frmPdvVenda
                                            strdResultado_IMP,
                                            Parametros.strImpCodBarr,
                                            Parametros.strImpQRCod,
-                                           Parametros.strImpLogo, False
-                                           )
-                        Else
-                            Application.Restart()
-                        End If
-
-                        If imgAtual <> "imgRetire" Then
-                            picEstado.Image = imgRetire
-                            imgAtual = "imgRetire"
-                        End If
-                        DisplayLabel_Limpar()
-                        If Parametros.strVoltarPadrao = "SIM" Then
-                            wait(3000)
-                            SQLControl.ConsultarProduto(Parametros.strCodProduto, Produto, "frmPdvVenda - Tratar_Peso")
-                            DisplayLabelNomeProduto(Produto.Codigo + " - " + Produto.Nome + " (R$ " + CType(Produto.Preco_Produto, Decimal).ToString("#,##0.00") + ")")
-                        End If
-                    End If
-
-
-                    If CType(strDadosPortaSerial_Peso, Decimal) >= "00539" And
-                       CType(strDadosPortaSerial_Peso, Decimal) <= "00750" Then
-
-#Region "PARAMETROS - CODIGO COMANDA"
-
-                        'Dim strCodComandaDHMS As String = Format(Now, "ddhhmmss")
-                        Dim strCodComandaDHMS As String = String.Empty
-
-                        If Parametros.strPrefixoComanda = "Nenhum" Then
-                            Parametros.strPrefixoComanda = ""
-                        End If
-
-                        If Parametros.strModoAuto = "Dia - Hora - Min - Seg" Then
-                            strCodComandaDHMS = Format(Now, "ddHHmmss")
-                        End If
-
-                        If Parametros.strModoAuto = "Sequencial" Then
-                            If ComandaAtivaCodigo = String.Empty Then
-                                strCodComandaDHMS = SQLControl.GetCodigoUltimaComanda_Config("frmPdvVenda - Tratar_Peso")
-
-                                If strCodComandaDHMS = "0" Or strCodComandaDHMS = "" Or strCodComandaDHMS = String.Empty Then
-                                    strCodComandaDHMS = "1"
-                                End If
-                            End If
-                        End If
-
-                        If ComandaAtivaCodigo <> String.Empty Then
-                            strCodComandaDHMS = ComandaAtivaCodigo
-                        End If
-
-#End Region
-
-                        SQLControl.ConsultarProduto(Parametros.CodSelf5, Produto, "frmPdvVenda - Tratar_Peso")
-                        DisplayLabelNomeProduto(Produto.Codigo + " - " + Produto.Nome + " (R$ " + CType(Produto.Preco_Produto, Decimal).ToString("#,##0.00") + ")")
-
-                        Dim dValor As Decimal = Produto.Preco_Produto
-                        Dim dQtd As Decimal = CType(strDadosPortaSerial_Peso, Decimal) / 1000
-                        Dim dQtd_UN As Decimal = 1
-                        Dim dResultado As Decimal = dQtd * dValor
-                        Dim dResultado_UN As Decimal = dQtd_UN * dValor
-
-                        Display(
-                        dQtd.ToString("#,###0.000"),
-                        dResultado_UN.ToString("#,##0.00"))
-
-                        Dim strdQtd_IMP As String = "(" + dQtd.ToString("#,###0.000") + "Kg)"
-                        Dim strdResultado_IMP As String = "R$ " + dResultado_UN.ToString("#,##0.00")
-
-                        If SQLControl.InserirComanda(
-                                                 Produto.Codigo,
-                                                 Parametros.strCodEmpresa,
-                                                 Parametros.strCodDeposito,
-                                                 Parametros.strCodVendedor,
-                                                 dQtd_UN,
-                                                 Produto.Preco_Produto,
-                                                 dResultado_UN,
-                                                 Parametros.strPrefixoComanda + strCodComandaDHMS,
-                                                 "1"
-                                                ) = True Then
-
-                            SQLControl.InserirComanda_s(Produto.Codigo,
-                                                    Parametros.strCodEmpresa,
-                                                    Parametros.strCodDeposito,
-                                                    Parametros.strCodVendedor,
-                                                    dQtd,
-                                                    Produto.Preco_Produto,
-                                                    dResultado,
-                                                    Parametros.strPrefixoComanda + strCodComandaDHMS,
-                                                    "1"
-                                                    )
-
-                            Impressao.Imprimir(
-                                           Parametros.strPrefixoComanda + strCodComandaDHMS,
-                                           Produto.Nome,
-                                           strdQtd_IMP,
-                                           strdResultado_IMP,
-                                           Parametros.strImpCodBarr,
-                                           Parametros.strImpQRCod,
-                                           Parametros.strImpLogo, False
+                                           Parametros.strImpLogo,
+                                           False
                                           )
 
+
                         Else
                             Application.Restart()
                         End If
+
+                        picEstado.Image = imgRetire
                         DisplayLabel_Limpar()
-                        If imgAtual <> "imgRetire" Then
-                            picEstado.Image = imgRetire
-                            imgAtual = "imgRetire"
-                        End If
+
                         If Parametros.strVoltarPadrao = "SIM" Then
                             wait(3000)
-                            SQLControl.ConsultarProduto(Parametros.strCodProduto, Produto, "frmPdvVenda - Tratar_Peso")
-                            DisplayLabelNomeProduto(Produto.Codigo + " - " + Produto.Nome + " (R$ " + CType(Produto.Preco_Produto, Decimal).ToString("#,##0.00") + ")")
+                            SQLControl.ConsultarProduto(Parametros.strCodProduto, Produto, "frmPdvVenda - Tratar")
+                            DisplayLabelNomeProduto(Produto.Codigo + " - " + Produto.Nome + " (R$ " + CType(Produto.Preco_Produto, Double).ToString("#,##0.00") + ")")
                         End If
-                        Exit Sub
 
                     End If
 
+                End If
+            Catch ex As Exception
+                LogApp.GerarLogErro(ex, "frmPdvVenda", "If intContadorLeitura_Peso = 2 And CType(strDadosPortaSerial_Peso, Decimal) > 00000")
+            End Try
+        End If
 
-                    If CType(strDadosPortaSerial_Peso, Decimal) >= "00751" Then
+
+
+    End Sub
+
+    'TRATAMENTO DE PESO PERSONALIZADO POR TIPO DE ITEM
+    Sub Tratar_Loja1()
+
+
+        If Parametros.strSistemaIntegrado = "Sischef" Then
+            If SQLControl.Testar_ConnPostgres("frmPdvVenda - Tratar_Peso") = False Then
+                Display("Banco de dados", "Sem Conexão.")
+
+                SyncLock picEstado
+                    picEstado.Image = imgColoque
+                End SyncLock
+                Exit Sub
+            End If
+        End If
+
+
+        If Parametros.strSistemaIntegrado = "Sismoura" Then
+            If SQLControl.Testar_Conn("frmPdvVenda - Tratar_Peso") = False Then
+                Display("Banco de dados", "Sem Conexão.")
+
+                SyncLock picEstado
+                    picEstado.Image = imgColoque
+                End SyncLock
+                Exit Sub
+            End If
+        End If
+
+
+        Try
+            If intContadorLeitura_Estado_N > 0 Or CType(strDadosPortaSerial_Peso, Decimal) = "0000" Then
+
+                Try
+
+                    SyncLock picEstado
+                        picEstado.Image = imgColoque
+                    End SyncLock
+
+                    Display("0,000", "0,00")
+                    'Debug.Print("frmpPdvVenda: tratar_intContadorLeitura_Estado_N > 3")
+                Catch ex As Exception
+                    LogApp.GerarLogErro(ex, "frmPdvVenda", "Tratar_Peso() - intContadorLeitura_Estado_N > 0 - picEstado.Image = imgColoque")
+                End Try
+
+
+            End If
+        Catch ex As Exception
+            LogApp.GerarLogErro(ex, "frmPdvVenda", "If intContadorLeitura_Estado_N > 0 Or CType(strDadosPortaSerial_Peso, Decimal) = 0000")
+        End Try
+
+
+        Try
+            If intContadorLeitura_Peso = 1 And CType(strDadosPortaSerial_Peso, Decimal) > "00000" Then
+
+                Try
+                    picEstado.Image = imgPesando
+                    Display("0,000", "0,00")
+                Catch ex As Exception
+                    LogApp.GerarLogErro(ex, "frmPdvVenda", "Tratar_Peso() - intContadorLeitura_Peso = 1 - picEstado.Image = imgPesando")
+                End Try
+
+            End If
+        Catch ex As Exception
+            LogApp.GerarLogErro(ex, "frmPdvVenda", "If intContadorLeitura_Peso = 1 And CType(strDadosPortaSerial_Peso, Decimal) > 00000")
+        End Try
+
+
+        Try
+            If intContadorLeitura_Peso = 4 And CType(strDadosPortaSerial_Peso, Decimal) > "00000" Then
+
+                If lblNomeProduto.Text.Contains("CONVENIO") Then
+
+                    If Parametros.strSistemaIntegrado = "Sischef" Then
+
+                        'KG
+                        If CType(strDadosPortaSerial_Peso, Decimal) >= "00001" And
+                           CType(strDadosPortaSerial_Peso, Decimal) <= "00538" Then
 
 #Region "PARAMETROS - CODIGO COMANDA"
 
-                        'Dim strCodComandaDHMS As String = Format(Now, "ddhhmmss")
-                        Dim strCodComandaDHMS As String = String.Empty
+                            'Dim strCodComandaDHMS As String = Format(Now, "ddhhmmss")
+                            Dim strCodComandaDHMS As String = String.Empty
 
-                        If Parametros.strPrefixoComanda = "Nenhum" Then
-                            Parametros.strPrefixoComanda = ""
-                        End If
+                            If Parametros.strPrefixoComanda = "Nenhum" Then
+                                Parametros.strPrefixoComanda = ""
+                            End If
 
-                        If Parametros.strModoAuto = "Dia - Hora - Min - Seg" Then
-                            strCodComandaDHMS = Format(Now, "ddHHmmss")
-                        End If
+                            If Parametros.strModoAuto = "Dia - Hora - Min - Seg" Then
+                                strCodComandaDHMS = Format(Now, "ddHHmmss")
+                            End If
 
-                        If Parametros.strModoAuto = "Sequencial" Then
-                            If ComandaAtivaCodigo = String.Empty Then
-                                strCodComandaDHMS = SQLControl.GetCodigoUltimaComanda_Config("frmPdvVenda - Tratar_Peso")
+                            If Parametros.strModoAuto = "Sequencial" Then
+                                If ComandaAtivaCodigo = String.Empty Then
+                                    strCodComandaDHMS = SQLControl.GetCodigoUltimaComanda_ConfigPostgres("frmPdvVenda - Tratar_Peso")
 
-                                If strCodComandaDHMS = "0" Or strCodComandaDHMS = "" Or strCodComandaDHMS = String.Empty Then
-                                    strCodComandaDHMS = "1"
+                                    If strCodComandaDHMS = "0" Or strCodComandaDHMS = "" Or strCodComandaDHMS = String.Empty Then
+                                        strCodComandaDHMS = "1"
+                                    End If
                                 End If
                             End If
+
+                            If ComandaAtivaCodigo <> String.Empty Then
+                                strCodComandaDHMS = ComandaAtivaCodigo
+                            End If
+#End Region
+
+                            SQLControl.ConsultarProdutoPostgres(Parametros.CodSelf4, Produto, "frmPdvVenda - Tratar")
+                            DisplayLabelNomeProduto(Produto.Codigo + " - " + Produto.Nome + " (R$ " + CType(Produto.Preco_Produto, Decimal).ToString("#,##0.00") + ")")
+
+                            Dim dValor As Decimal = Produto.Preco_Produto
+                            Dim dQtd As Decimal = CType(strDadosPortaSerial_Peso, Decimal) / 1000
+                            Dim dResultado As Decimal = dQtd * dValor
+
+                            Display(
+                            dQtd.ToString("#,###0.000"),
+                            dResultado.ToString("#,##0.00"))
+
+                            Dim strdQtd_IMP As String = "(" + dQtd.ToString("#,###0.000") + "Kg)"
+                            Dim strdResultado_IMP As String = "R$ " + dResultado.ToString("#,##0.00")
+
+                            If SQLControl.InserirComandaPostgres(
+                                                     Produto.Codigo,
+                                                     Parametros.strCodEmpresa,
+                                                     Parametros.strCodDeposito,
+                                                     Parametros.strCodVendedor,
+                                                     dQtd,
+                                                     Produto.Preco_Produto,
+                                                     dResultado,
+                                                     Parametros.strPrefixoComanda + strCodComandaDHMS,
+                                                     "1"
+                                                     ) = True Then
+
+
+                                SQLControl.InserirComanda_sPostgres(Produto.Codigo,
+                                                        Parametros.strCodEmpresa,
+                                                        Parametros.strCodDeposito,
+                                                        Parametros.strCodVendedor,
+                                                        dQtd,
+                                                        Produto.Preco_Produto,
+                                                        dResultado,
+                                                        Parametros.strPrefixoComanda + strCodComandaDHMS,
+                                                        "1"
+                                                        )
+
+                                Impressao.Imprimir(
+                                               Parametros.strPrefixoComanda + strCodComandaDHMS,
+                                               Produto.Nome,
+                                               strdQtd_IMP,
+                                               strdResultado_IMP,
+                                               Parametros.strImpCodBarr,
+                                               Parametros.strImpQRCod,
+                                               Parametros.strImpLogo, False
+                                               )
+                            Else
+                                Application.Restart()
+                            End If
+
+                            If imgAtual <> "imgRetire" Then
+                                picEstado.Image = imgRetire
+                                imgAtual = "imgRetire"
+                            End If
+                            DisplayLabel_Limpar()
+                            If Parametros.strVoltarPadrao = "SIM" Then
+                                wait(3000)
+                                SQLControl.ConsultarProdutoPostgres(Parametros.strCodProduto, Produto, "frmPdvVenda - Tratar_Peso")
+                                DisplayLabelNomeProduto(Produto.Codigo + " - " + Produto.Nome + " (R$ " + CType(Produto.Preco_Produto, Decimal).ToString("#,##0.00") + ")")
+                            End If
+
                         End If
 
-                        If ComandaAtivaCodigo <> String.Empty Then
-                            strCodComandaDHMS = ComandaAtivaCodigo
-                        End If
+                        'UN
+                        If CType(strDadosPortaSerial_Peso, Decimal) >= "00539" And
+                           CType(strDadosPortaSerial_Peso, Decimal) <= "00750" Then
+
+#Region "PARAMETROS - CODIGO COMANDA"
+
+                            'Dim strCodComandaDHMS As String = Format(Now, "ddhhmmss")
+                            Dim strCodComandaDHMS As String = String.Empty
+
+                            If Parametros.strPrefixoComanda = "Nenhum" Then
+                                Parametros.strPrefixoComanda = ""
+                            End If
+
+                            If Parametros.strModoAuto = "Dia - Hora - Min - Seg" Then
+                                strCodComandaDHMS = Format(Now, "ddHHmmss")
+                            End If
+
+                            If Parametros.strModoAuto = "Sequencial" Then
+                                If ComandaAtivaCodigo = String.Empty Then
+                                    strCodComandaDHMS = SQLControl.GetCodigoUltimaComanda_ConfigPostgres("frmPdvVenda - Tratar_Peso")
+
+                                    If strCodComandaDHMS = "0" Or strCodComandaDHMS = "" Or strCodComandaDHMS = String.Empty Then
+                                        strCodComandaDHMS = "1"
+                                    End If
+                                End If
+                            End If
+
+                            If ComandaAtivaCodigo <> String.Empty Then
+                                strCodComandaDHMS = ComandaAtivaCodigo
+                            End If
 
 #End Region
-                        'Parametros.strCodProduto2
-                        SQLControl.ConsultarProduto(Parametros.CodSelf6, Produto, "frmPdvVenda - Tratar_Peso")
-                        DisplayLabelNomeProduto(Produto.Codigo + " - " + Produto.Nome + " (R$ " + CType(Produto.Preco_Produto, Decimal).ToString("#,##0.00") + ")")
 
-                        Dim dValor As Decimal = Produto.Preco_Produto
-                        Dim dQtd As Decimal = CType(strDadosPortaSerial_Peso, Decimal) / 1000
-                        Dim dQtd_UN As Decimal = 1
-                        Dim dResultado As Decimal = dQtd * dValor
-                        Dim dResultado_UN As Decimal = dQtd_UN * dValor
-
-                        Display(
-                        dQtd.ToString("#,###0.000"),
-                        dResultado_UN.ToString("#,##0.00"))
-
-                        Dim strdQtd_IMP As String = "(" + dQtd.ToString("#,###0.000") + "Kg)"
-                        Dim strdResultado_IMP As String = "R$ " + dResultado_UN.ToString("#,##0.00")
-
-                        If SQLControl.InserirComanda(
-                                                 Produto.Codigo,
-                                                 Parametros.strCodEmpresa,
-                                                 Parametros.strCodDeposito,
-                                                 Parametros.strCodVendedor,
-                                                 dQtd_UN,
-                                                 Produto.Preco_Produto,
-                                                 dResultado_UN,
-                                                 Parametros.strPrefixoComanda + strCodComandaDHMS,
-                                                 "1"
-                                                ) = True Then
-
-                            SQLControl.InserirComanda_s(Produto.Codigo,
-                                                    Parametros.strCodEmpresa,
-                                                    Parametros.strCodDeposito,
-                                                    Parametros.strCodVendedor,
-                                                    dQtd,
-                                                    Produto.Preco_Produto,
-                                                    dResultado,
-                                                    Parametros.strPrefixoComanda + strCodComandaDHMS,
-                                                    "1"
-                                                    )
-
-                            Impressao.Imprimir(
-                                           Parametros.strPrefixoComanda + strCodComandaDHMS,
-                                           Produto.Nome,
-                                           strdQtd_IMP,
-                                           strdResultado_IMP,
-                                           Parametros.strImpCodBarr,
-                                           Parametros.strImpQRCod,
-                                           Parametros.strImpLogo, False
-                                          )
-
-                        Else
-                            Application.Restart()
-                        End If
-                        DisplayLabel_Limpar()
-                        If imgAtual <> "imgRetire" Then
-                            picEstado.Image = imgRetire
-                            imgAtual = "imgRetire"
-                        End If
-                        If Parametros.strVoltarPadrao = "SIM" Then
-                            wait(3000)
-                            SQLControl.ConsultarProduto(Parametros.strCodProduto, Produto, "frmPdvVenda - Tratar_Peso")
+                            SQLControl.ConsultarProdutoPostgres(Parametros.CodSelf5, Produto, "frmPdvVenda - Tratar_Peso")
                             DisplayLabelNomeProduto(Produto.Codigo + " - " + Produto.Nome + " (R$ " + CType(Produto.Preco_Produto, Decimal).ToString("#,##0.00") + ")")
+
+                            Dim dValor As Decimal = Produto.Preco_Produto
+                            Dim dQtd As Decimal = CType(strDadosPortaSerial_Peso, Decimal) / 1000
+                            Dim dQtd_UN As Decimal = 1
+                            Dim dResultado As Decimal = dQtd * dValor
+                            Dim dResultado_UN As Decimal = dQtd_UN * dValor
+
+                            Display(
+                            dQtd.ToString("#,###0.000"),
+                            dResultado_UN.ToString("#,##0.00"))
+
+                            Dim strdQtd_IMP As String = "(" + dQtd.ToString("#,###0.000") + "Kg)"
+                            Dim strdResultado_IMP As String = "R$ " + dResultado_UN.ToString("#,##0.00")
+
+                            If SQLControl.InserirComandaPostgres(
+                                                     Produto.Codigo,
+                                                     Parametros.strCodEmpresa,
+                                                     Parametros.strCodDeposito,
+                                                     Parametros.strCodVendedor,
+                                                     dQtd_UN,
+                                                     Produto.Preco_Produto,
+                                                     dResultado_UN,
+                                                     Parametros.strPrefixoComanda + strCodComandaDHMS,
+                                                     "1"
+                                                    ) = True Then
+
+                                SQLControl.InserirComanda_sPostgres(Produto.Codigo,
+                                                        Parametros.strCodEmpresa,
+                                                        Parametros.strCodDeposito,
+                                                        Parametros.strCodVendedor,
+                                                        dQtd,
+                                                        Produto.Preco_Produto,
+                                                        dResultado,
+                                                        Parametros.strPrefixoComanda + strCodComandaDHMS,
+                                                        "1"
+                                                        )
+
+                                Impressao.Imprimir(
+                                               Parametros.strPrefixoComanda + strCodComandaDHMS,
+                                               Produto.Nome,
+                                               strdQtd_IMP,
+                                               strdResultado_IMP,
+                                               Parametros.strImpCodBarr,
+                                               Parametros.strImpQRCod,
+                                               Parametros.strImpLogo, False
+                                              )
+
+                            Else
+                                Application.Restart()
+                            End If
+                            DisplayLabel_Limpar()
+                            If imgAtual <> "imgRetire" Then
+                                picEstado.Image = imgRetire
+                                imgAtual = "imgRetire"
+                            End If
+                            If Parametros.strVoltarPadrao = "SIM" Then
+                                wait(3000)
+                                SQLControl.ConsultarProdutoPostgres(Parametros.strCodProduto, Produto, "frmPdvVenda - Tratar_Peso")
+                                DisplayLabelNomeProduto(Produto.Codigo + " - " + Produto.Nome + " (R$ " + CType(Produto.Preco_Produto, Decimal).ToString("#,##0.00") + ")")
+                            End If
+                            Exit Sub
+
                         End If
-                        Exit Sub
+
+                        'UN
+                        If CType(strDadosPortaSerial_Peso, Decimal) >= "00751" Then
+
+#Region "PARAMETROS - CODIGO COMANDA"
+
+                            'Dim strCodComandaDHMS As String = Format(Now, "ddhhmmss")
+                            Dim strCodComandaDHMS As String = String.Empty
+
+                            If Parametros.strPrefixoComanda = "Nenhum" Then
+                                Parametros.strPrefixoComanda = ""
+                            End If
+
+                            If Parametros.strModoAuto = "Dia - Hora - Min - Seg" Then
+                                strCodComandaDHMS = Format(Now, "ddHHmmss")
+                            End If
+
+                            If Parametros.strModoAuto = "Sequencial" Then
+                                If ComandaAtivaCodigo = String.Empty Then
+                                    strCodComandaDHMS = SQLControl.GetCodigoUltimaComanda_ConfigPostgres("frmPdvVenda - Tratar_Peso")
+
+                                    If strCodComandaDHMS = "0" Or strCodComandaDHMS = "" Or strCodComandaDHMS = String.Empty Then
+                                        strCodComandaDHMS = "1"
+                                    End If
+                                End If
+                            End If
+
+                            If ComandaAtivaCodigo <> String.Empty Then
+                                strCodComandaDHMS = ComandaAtivaCodigo
+                            End If
+
+#End Region
+                            'Parametros.strCodProduto2
+                            SQLControl.ConsultarProdutoPostgres(Parametros.CodSelf6, Produto, "frmPdvVenda - Tratar_Peso")
+                            DisplayLabelNomeProduto(Produto.Codigo + " - " + Produto.Nome + " (R$ " + CType(Produto.Preco_Produto, Decimal).ToString("#,##0.00") + ")")
+
+                            Dim dValor As Decimal = Produto.Preco_Produto
+                            Dim dQtd As Decimal = CType(strDadosPortaSerial_Peso, Decimal) / 1000
+                            Dim dQtd_UN As Decimal = 1
+                            Dim dResultado As Decimal = dQtd * dValor
+                            Dim dResultado_UN As Decimal = dQtd_UN * dValor
+
+                            Display(
+                            dQtd.ToString("#,###0.000"),
+                            dResultado_UN.ToString("#,##0.00"))
+
+                            Dim strdQtd_IMP As String = "(" + dQtd.ToString("#,###0.000") + "Kg)"
+                            Dim strdResultado_IMP As String = "R$ " + dResultado_UN.ToString("#,##0.00")
+
+                            If SQLControl.InserirComandaPostgres(
+                                                     Produto.Codigo,
+                                                     Parametros.strCodEmpresa,
+                                                     Parametros.strCodDeposito,
+                                                     Parametros.strCodVendedor,
+                                                     dQtd_UN,
+                                                     Produto.Preco_Produto,
+                                                     dResultado_UN,
+                                                     Parametros.strPrefixoComanda + strCodComandaDHMS,
+                                                     "1"
+                                                    ) = True Then
+
+                                SQLControl.InserirComanda_sPostgres(Produto.Codigo,
+                                                        Parametros.strCodEmpresa,
+                                                        Parametros.strCodDeposito,
+                                                        Parametros.strCodVendedor,
+                                                        dQtd,
+                                                        Produto.Preco_Produto,
+                                                        dResultado,
+                                                        Parametros.strPrefixoComanda + strCodComandaDHMS,
+                                                        "1"
+                                                        )
+
+                                Impressao.Imprimir(
+                                               Parametros.strPrefixoComanda + strCodComandaDHMS,
+                                               Produto.Nome,
+                                               strdQtd_IMP,
+                                               strdResultado_IMP,
+                                               Parametros.strImpCodBarr,
+                                               Parametros.strImpQRCod,
+                                               Parametros.strImpLogo, False
+                                              )
+
+                            Else
+                                Application.Restart()
+                            End If
+                            DisplayLabel_Limpar()
+                            If imgAtual <> "imgRetire" Then
+                                picEstado.Image = imgRetire
+                                imgAtual = "imgRetire"
+                            End If
+                            If Parametros.strVoltarPadrao = "SIM" Then
+                                wait(3000)
+                                SQLControl.ConsultarProdutoPostgres(Parametros.strCodProduto, Produto, "frmPdvVenda - Tratar_Peso")
+                                DisplayLabelNomeProduto(Produto.Codigo + " - " + Produto.Nome + " (R$ " + CType(Produto.Preco_Produto, Decimal).ToString("#,##0.00") + ")")
+                            End If
+                            Exit Sub
+
+                        End If
+
+                    End If
+
+
+                    If Parametros.strSistemaIntegrado = "Sismoura" Then
+
+                        If CType(strDadosPortaSerial_Peso, Decimal) >= "00001" And
+   CType(strDadosPortaSerial_Peso, Decimal) <= "00538" Then
+
+#Region "PARAMETROS - CODIGO COMANDA"
+
+                            'Dim strCodComandaDHMS As String = Format(Now, "ddhhmmss")
+                            Dim strCodComandaDHMS As String = String.Empty
+
+                            If Parametros.strPrefixoComanda = "Nenhum" Then
+                                Parametros.strPrefixoComanda = ""
+                            End If
+
+                            If Parametros.strModoAuto = "Dia - Hora - Min - Seg" Then
+                                strCodComandaDHMS = Format(Now, "ddHHmmss")
+                            End If
+
+                            If Parametros.strModoAuto = "Sequencial" Then
+                                If ComandaAtivaCodigo = String.Empty Then
+                                    strCodComandaDHMS = SQLControl.GetCodigoUltimaComanda_Config("frmPdvVenda - Tratar_Peso")
+
+                                    If strCodComandaDHMS = "0" Or strCodComandaDHMS = "" Or strCodComandaDHMS = String.Empty Then
+                                        strCodComandaDHMS = "1"
+                                    End If
+                                End If
+                            End If
+
+                            If ComandaAtivaCodigo <> String.Empty Then
+                                strCodComandaDHMS = ComandaAtivaCodigo
+                            End If
+#End Region
+
+                            SQLControl.ConsultarProduto(Parametros.CodSelf4, Produto, "frmPdvVenda - Tratar")
+                            DisplayLabelNomeProduto(Produto.Codigo + " - " + Produto.Nome + " (R$ " + CType(Produto.Preco_Produto, Decimal).ToString("#,##0.00") + ")")
+
+                            Dim dValor As Decimal = Produto.Preco_Produto
+                            Dim dQtd As Decimal = CType(strDadosPortaSerial_Peso, Decimal) / 1000
+                            Dim dResultado As Decimal = dQtd * dValor
+
+                            Display(
+                            dQtd.ToString("#,###0.000"),
+                            dResultado.ToString("#,##0.00"))
+
+                            Dim strdQtd_IMP As String = "(" + dQtd.ToString("#,###0.000") + "Kg)"
+                            Dim strdResultado_IMP As String = "R$ " + dResultado.ToString("#,##0.00")
+
+                            If SQLControl.InserirComanda(
+                                                     Produto.Codigo,
+                                                     Parametros.strCodEmpresa,
+                                                     Parametros.strCodDeposito,
+                                                     Parametros.strCodVendedor,
+                                                     dQtd,
+                                                     Produto.Preco_Produto,
+                                                     dResultado,
+                                                     Parametros.strPrefixoComanda + strCodComandaDHMS,
+                                                     "1"
+                                                     ) = True Then
+
+
+                                SQLControl.InserirComanda_s(Produto.Codigo,
+                                                        Parametros.strCodEmpresa,
+                                                        Parametros.strCodDeposito,
+                                                        Parametros.strCodVendedor,
+                                                        dQtd,
+                                                        Produto.Preco_Produto,
+                                                        dResultado,
+                                                        Parametros.strPrefixoComanda + strCodComandaDHMS,
+                                                        "1"
+                                                        )
+
+                                Impressao.Imprimir(
+                                               Parametros.strPrefixoComanda + strCodComandaDHMS,
+                                               Produto.Nome,
+                                               strdQtd_IMP,
+                                               strdResultado_IMP,
+                                               Parametros.strImpCodBarr,
+                                               Parametros.strImpQRCod,
+                                               Parametros.strImpLogo, False
+                                               )
+                            Else
+                                Application.Restart()
+                            End If
+
+                            If imgAtual <> "imgRetire" Then
+                                picEstado.Image = imgRetire
+                                imgAtual = "imgRetire"
+                            End If
+                            DisplayLabel_Limpar()
+                            If Parametros.strVoltarPadrao = "SIM" Then
+                                wait(3000)
+                                SQLControl.ConsultarProduto(Parametros.strCodProduto, Produto, "frmPdvVenda - Tratar_Peso")
+                                DisplayLabelNomeProduto(Produto.Codigo + " - " + Produto.Nome + " (R$ " + CType(Produto.Preco_Produto, Decimal).ToString("#,##0.00") + ")")
+                            End If
+
+
+
+
+
+
+                        End If
+
+
+                        If CType(strDadosPortaSerial_Peso, Decimal) >= "00539" And
+                           CType(strDadosPortaSerial_Peso, Decimal) <= "00750" Then
+
+#Region "PARAMETROS - CODIGO COMANDA"
+
+                            'Dim strCodComandaDHMS As String = Format(Now, "ddhhmmss")
+                            Dim strCodComandaDHMS As String = String.Empty
+
+                            If Parametros.strPrefixoComanda = "Nenhum" Then
+                                Parametros.strPrefixoComanda = ""
+                            End If
+
+                            If Parametros.strModoAuto = "Dia - Hora - Min - Seg" Then
+                                strCodComandaDHMS = Format(Now, "ddHHmmss")
+                            End If
+
+                            If Parametros.strModoAuto = "Sequencial" Then
+                                If ComandaAtivaCodigo = String.Empty Then
+                                    strCodComandaDHMS = SQLControl.GetCodigoUltimaComanda_Config("frmPdvVenda - Tratar_Peso")
+
+                                    If strCodComandaDHMS = "0" Or strCodComandaDHMS = "" Or strCodComandaDHMS = String.Empty Then
+                                        strCodComandaDHMS = "1"
+                                    End If
+                                End If
+                            End If
+
+                            If ComandaAtivaCodigo <> String.Empty Then
+                                strCodComandaDHMS = ComandaAtivaCodigo
+                            End If
+
+#End Region
+
+                            SQLControl.ConsultarProduto(Parametros.CodSelf5, Produto, "frmPdvVenda - Tratar_Peso")
+                            DisplayLabelNomeProduto(Produto.Codigo + " - " + Produto.Nome + " (R$ " + CType(Produto.Preco_Produto, Decimal).ToString("#,##0.00") + ")")
+
+                            Dim dValor As Decimal = Produto.Preco_Produto
+                            Dim dQtd As Decimal = CType(strDadosPortaSerial_Peso, Decimal) / 1000
+                            Dim dQtd_UN As Decimal = 1
+                            Dim dResultado As Decimal = dQtd * dValor
+                            Dim dResultado_UN As Decimal = dQtd_UN * dValor
+
+                            Display(
+                            dQtd.ToString("#,###0.000"),
+                            dResultado_UN.ToString("#,##0.00"))
+
+                            Dim strdQtd_IMP As String = "(" + dQtd.ToString("#,###0.000") + "Kg)"
+                            Dim strdResultado_IMP As String = "R$ " + dResultado_UN.ToString("#,##0.00")
+
+                            If SQLControl.InserirComanda(
+                                                     Produto.Codigo,
+                                                     Parametros.strCodEmpresa,
+                                                     Parametros.strCodDeposito,
+                                                     Parametros.strCodVendedor,
+                                                     dQtd_UN,
+                                                     Produto.Preco_Produto,
+                                                     dResultado_UN,
+                                                     Parametros.strPrefixoComanda + strCodComandaDHMS,
+                                                     "1"
+                                                    ) = True Then
+
+                                SQLControl.InserirComanda_s(Produto.Codigo,
+                                                        Parametros.strCodEmpresa,
+                                                        Parametros.strCodDeposito,
+                                                        Parametros.strCodVendedor,
+                                                        dQtd,
+                                                        Produto.Preco_Produto,
+                                                        dResultado,
+                                                        Parametros.strPrefixoComanda + strCodComandaDHMS,
+                                                        "1"
+                                                        )
+
+                                Impressao.Imprimir(
+                                               Parametros.strPrefixoComanda + strCodComandaDHMS,
+                                               Produto.Nome,
+                                               strdQtd_IMP,
+                                               strdResultado_IMP,
+                                               Parametros.strImpCodBarr,
+                                               Parametros.strImpQRCod,
+                                               Parametros.strImpLogo, False
+                                              )
+
+                            Else
+                                Application.Restart()
+                            End If
+                            DisplayLabel_Limpar()
+                            If imgAtual <> "imgRetire" Then
+                                picEstado.Image = imgRetire
+                                imgAtual = "imgRetire"
+                            End If
+                            If Parametros.strVoltarPadrao = "SIM" Then
+                                wait(3000)
+                                SQLControl.ConsultarProduto(Parametros.strCodProduto, Produto, "frmPdvVenda - Tratar_Peso")
+                                DisplayLabelNomeProduto(Produto.Codigo + " - " + Produto.Nome + " (R$ " + CType(Produto.Preco_Produto, Decimal).ToString("#,##0.00") + ")")
+                            End If
+                            Exit Sub
+
+                        End If
+
+
+                        If CType(strDadosPortaSerial_Peso, Decimal) >= "00751" Then
+
+#Region "PARAMETROS - CODIGO COMANDA"
+
+                            'Dim strCodComandaDHMS As String = Format(Now, "ddhhmmss")
+                            Dim strCodComandaDHMS As String = String.Empty
+
+                            If Parametros.strPrefixoComanda = "Nenhum" Then
+                                Parametros.strPrefixoComanda = ""
+                            End If
+
+                            If Parametros.strModoAuto = "Dia - Hora - Min - Seg" Then
+                                strCodComandaDHMS = Format(Now, "ddHHmmss")
+                            End If
+
+                            If Parametros.strModoAuto = "Sequencial" Then
+                                If ComandaAtivaCodigo = String.Empty Then
+                                    strCodComandaDHMS = SQLControl.GetCodigoUltimaComanda_Config("frmPdvVenda - Tratar_Peso")
+
+                                    If strCodComandaDHMS = "0" Or strCodComandaDHMS = "" Or strCodComandaDHMS = String.Empty Then
+                                        strCodComandaDHMS = "1"
+                                    End If
+                                End If
+                            End If
+
+                            If ComandaAtivaCodigo <> String.Empty Then
+                                strCodComandaDHMS = ComandaAtivaCodigo
+                            End If
+
+#End Region
+                            'Parametros.strCodProduto2
+                            SQLControl.ConsultarProduto(Parametros.CodSelf6, Produto, "frmPdvVenda - Tratar_Peso")
+                            DisplayLabelNomeProduto(Produto.Codigo + " - " + Produto.Nome + " (R$ " + CType(Produto.Preco_Produto, Decimal).ToString("#,##0.00") + ")")
+
+                            Dim dValor As Decimal = Produto.Preco_Produto
+                            Dim dQtd As Decimal = CType(strDadosPortaSerial_Peso, Decimal) / 1000
+                            Dim dQtd_UN As Decimal = 1
+                            Dim dResultado As Decimal = dQtd * dValor
+                            Dim dResultado_UN As Decimal = dQtd_UN * dValor
+
+                            Display(
+                            dQtd.ToString("#,###0.000"),
+                            dResultado_UN.ToString("#,##0.00"))
+
+                            Dim strdQtd_IMP As String = "(" + dQtd.ToString("#,###0.000") + "Kg)"
+                            Dim strdResultado_IMP As String = "R$ " + dResultado_UN.ToString("#,##0.00")
+
+                            If SQLControl.InserirComanda(
+                                                     Produto.Codigo,
+                                                     Parametros.strCodEmpresa,
+                                                     Parametros.strCodDeposito,
+                                                     Parametros.strCodVendedor,
+                                                     dQtd_UN,
+                                                     Produto.Preco_Produto,
+                                                     dResultado_UN,
+                                                     Parametros.strPrefixoComanda + strCodComandaDHMS,
+                                                     "1"
+                                                    ) = True Then
+
+                                SQLControl.InserirComanda_s(Produto.Codigo,
+                                                        Parametros.strCodEmpresa,
+                                                        Parametros.strCodDeposito,
+                                                        Parametros.strCodVendedor,
+                                                        dQtd,
+                                                        Produto.Preco_Produto,
+                                                        dResultado,
+                                                        Parametros.strPrefixoComanda + strCodComandaDHMS,
+                                                        "1"
+                                                        )
+
+                                Impressao.Imprimir(
+                                               Parametros.strPrefixoComanda + strCodComandaDHMS,
+                                               Produto.Nome,
+                                               strdQtd_IMP,
+                                               strdResultado_IMP,
+                                               Parametros.strImpCodBarr,
+                                               Parametros.strImpQRCod,
+                                               Parametros.strImpLogo, False
+                                              )
+
+                            Else
+                                Application.Restart()
+                            End If
+                            DisplayLabel_Limpar()
+                            If imgAtual <> "imgRetire" Then
+                                picEstado.Image = imgRetire
+                                imgAtual = "imgRetire"
+                            End If
+                            If Parametros.strVoltarPadrao = "SIM" Then
+                                wait(3000)
+                                SQLControl.ConsultarProduto(Parametros.strCodProduto, Produto, "frmPdvVenda - Tratar_Peso")
+                                DisplayLabelNomeProduto(Produto.Codigo + " - " + Produto.Nome + " (R$ " + CType(Produto.Preco_Produto, Decimal).ToString("#,##0.00") + ")")
+                            End If
+                            Exit Sub
+
+                        End If
 
                     End If
 
                     Exit Sub
                 End If
 
-                If CType(strDadosPortaSerial_Peso, Decimal) > "0000" Then
+
+                If Parametros.strSistemaIntegrado = "Sischef" Then
+
+                    If CType(strDadosPortaSerial_Peso, Decimal) > "0000" Then
 
 #Region "PARAMETROS - CODIGO COMANDA"
 
-                    'Dim strCodComandaDHMS As String = Format(Now, "ddhhmmss")
-                    Dim strCodComandaDHMS As String = String.Empty
+                        'Dim strCodComandaDHMS As String = Format(Now, "ddhhmmss")
+                        Dim strCodComandaDHMS As String = String.Empty
 
-                    If Parametros.strPrefixoComanda = "Nenhum" Then
-                        Parametros.strPrefixoComanda = ""
-                    End If
+                        If Parametros.strPrefixoComanda = "Nenhum" Then
+                            Parametros.strPrefixoComanda = ""
+                        End If
 
-                    If Parametros.strModoAuto = "Dia - Hora - Min - Seg" Then
-                        strCodComandaDHMS = Format(Now, "ddHHmmss")
-                    End If
+                        If Parametros.strModoAuto = "Dia - Hora - Min - Seg" Then
+                            strCodComandaDHMS = Format(Now, "ddHHmmss")
+                        End If
 
-                    If Parametros.strModoAuto = "Sequencial" Then
-                        If ComandaAtivaCodigo = String.Empty Then
-                            strCodComandaDHMS = SQLControl.GetCodigoUltimaComanda_Config("frmPdvVenda - Tratar_Peso")
+                        If Parametros.strModoAuto = "Sequencial" Then
+                            If ComandaAtivaCodigo = String.Empty Then
+                                strCodComandaDHMS = SQLControl.GetCodigoUltimaComanda_ConfigPostgres("frmPdvVenda - Tratar_Peso")
 
-                            If strCodComandaDHMS = "0" Or strCodComandaDHMS = "" Or strCodComandaDHMS = String.Empty Then
-                                strCodComandaDHMS = "1"
+                                If strCodComandaDHMS = "0" Or strCodComandaDHMS = "" Or strCodComandaDHMS = String.Empty Then
+                                    strCodComandaDHMS = "1"
+                                End If
                             End If
                         End If
-                    End If
 
-                    If ComandaAtivaCodigo <> String.Empty Then
-                        strCodComandaDHMS = ComandaAtivaCodigo
-                    End If
+                        If ComandaAtivaCodigo <> String.Empty Then
+                            strCodComandaDHMS = ComandaAtivaCodigo
+                        End If
 #End Region
 
-                    Dim dValor As Decimal = Produto.Preco_Produto
-                    Dim dQtd As Decimal = CType(strDadosPortaSerial_Peso, Decimal) / 1000
-                    Dim dResultado As Decimal = dQtd * dValor
+                        Dim dValor As Decimal = Produto.Preco_Produto
+                        Dim dQtd As Decimal = CType(strDadosPortaSerial_Peso, Decimal) / 1000
+                        Dim dResultado As Decimal = dQtd * dValor
 
-                    Display(
-                dQtd.ToString("#,###0.000"),
-                dResultado.ToString("#,##0.00"))
+                        Display(
+                         dQtd.ToString("#,###0.000"),
+                         dResultado.ToString("#,##0.00"))
 
-                    Dim strdQtd_IMP As String = "(" + dQtd.ToString("#,###0.000") + "Kg)"
-                    Dim strdResultado_IMP As String = "R$ " + dResultado.ToString("#,##0.00")
-
-
-                    If SQLControl.InserirComanda(
-                                             Produto.Codigo,
-                                             Parametros.strCodEmpresa,
-                                             Parametros.strCodDeposito,
-                                             Parametros.strCodVendedor,
-                                             dQtd,
-                                             Produto.Preco_Produto,
-                                             dResultado,
-                                             Parametros.strPrefixoComanda + strCodComandaDHMS,
-                                             "1") = True Then
-                        ' Parametros.strPrefixoComanda +strCodComandaDHMS
+                        Dim strdQtd_IMP As String = "(" + dQtd.ToString("#,###0.000") + "Kg)"
+                        Dim strdResultado_IMP As String = "R$ " + dResultado.ToString("#,##0.00")
 
 
-                        SQLControl.InserirComanda_s(
-                                                Produto.Codigo,
-                                                Parametros.strCodEmpresa,
-                                                Parametros.strCodDeposito,
-                                                Parametros.strCodVendedor,
-                                                dQtd,
-                                                Produto.Preco_Produto,
-                                                dResultado,
-                                                Parametros.strPrefixoComanda + strCodComandaDHMS,
-                                                "1")
-                        'Parametros.strPrefixoComanda + strCodComandaDHMS
+                        If SQLControl.InserirComandaPostgres(
+                                                 Produto.Codigo,
+                                                 Parametros.strCodEmpresa,
+                                                 Parametros.strCodDeposito,
+                                                 Parametros.strCodVendedor,
+                                                 dQtd,
+                                                 Produto.Preco_Produto,
+                                                 dResultado,
+                                                 Parametros.strPrefixoComanda + strCodComandaDHMS,
+                                                 "1") = True Then
+                            ' Parametros.strPrefixoComanda +strCodComandaDHMS
 
-                        Impressao.Imprimir(
-                                       Parametros.strPrefixoComanda + strCodComandaDHMS,
-                                       Produto.Nome,
-                                       strdQtd_IMP,
-                                       strdResultado_IMP,
-                                       Parametros.strImpCodBarr,
-                                       Parametros.strImpQRCod,
-                                       Parametros.strImpLogo,
-                                       False
-                                      )
 
-                    Else
-                        Application.Restart()
+                            SQLControl.InserirComanda_sPostgres(
+                                                    Produto.Codigo,
+                                                    Parametros.strCodEmpresa,
+                                                    Parametros.strCodDeposito,
+                                                    Parametros.strCodVendedor,
+                                                    dQtd,
+                                                    Produto.Preco_Produto,
+                                                    dResultado,
+                                                    Parametros.strPrefixoComanda + strCodComandaDHMS,
+                                                    "1")
+                            'Parametros.strPrefixoComanda + strCodComandaDHMS
+
+                            Impressao.Imprimir(
+                                           Parametros.strPrefixoComanda + strCodComandaDHMS,
+                                           Produto.Nome,
+                                           strdQtd_IMP,
+                                           strdResultado_IMP,
+                                           Parametros.strImpCodBarr,
+                                           Parametros.strImpQRCod,
+                                           Parametros.strImpLogo,
+                                           False
+                                          )
+
+                        Else
+                            Application.Restart()
+                        End If
+
+                        picEstado.Image = imgRetire
+                        DisplayLabel_Limpar()
+
+                        If Parametros.strVoltarPadrao = "SIM" Then
+                            wait(3000)
+                            SQLControl.ConsultarProdutoPostgres(Parametros.strCodProduto, Produto, "frmPdvVenda - Tratar")
+                            DisplayLabelNomeProduto(Produto.Codigo + " - " + Produto.Nome + " (R$ " + CType(Produto.Preco_Produto, Double).ToString("#,##0.00") + ")")
+                        End If
+
                     End If
 
-                    picEstado.Image = imgRetire
-                    DisplayLabel_Limpar()
+                End If
 
-                    If Parametros.strVoltarPadrao = "SIM" Then
-                        wait(3000)
-                        SQLControl.ConsultarProduto(Parametros.strCodProduto, Produto, "frmPdvVenda - Tratar")
-                        DisplayLabelNomeProduto(Produto.Codigo + " - " + Produto.Nome + " (R$ " + CType(Produto.Preco_Produto, Double).ToString("#,##0.00") + ")")
+
+                If Parametros.strSistemaIntegrado = "Sismoura" Then
+
+                    If CType(strDadosPortaSerial_Peso, Decimal) > "0000" Then
+
+#Region "PARAMETROS - CODIGO COMANDA"
+
+                        'Dim strCodComandaDHMS As String = Format(Now, "ddhhmmss")
+                        Dim strCodComandaDHMS As String = String.Empty
+
+                        If Parametros.strPrefixoComanda = "Nenhum" Then
+                            Parametros.strPrefixoComanda = ""
+                        End If
+
+                        If Parametros.strModoAuto = "Dia - Hora - Min - Seg" Then
+                            strCodComandaDHMS = Format(Now, "ddHHmmss")
+                        End If
+
+                        If Parametros.strModoAuto = "Sequencial" Then
+                            If ComandaAtivaCodigo = String.Empty Then
+                                strCodComandaDHMS = SQLControl.GetCodigoUltimaComanda_Config("frmPdvVenda - Tratar_Peso")
+
+                                If strCodComandaDHMS = "0" Or strCodComandaDHMS = "" Or strCodComandaDHMS = String.Empty Then
+                                    strCodComandaDHMS = "1"
+                                End If
+                            End If
+                        End If
+
+                        If ComandaAtivaCodigo <> String.Empty Then
+                            strCodComandaDHMS = ComandaAtivaCodigo
+                        End If
+#End Region
+
+                        Dim dValor As Decimal = Produto.Preco_Produto
+                        Dim dQtd As Decimal = CType(strDadosPortaSerial_Peso, Decimal) / 1000
+                        Dim dResultado As Decimal = dQtd * dValor
+
+                        Display(
+                         dQtd.ToString("#,###0.000"),
+                         dResultado.ToString("#,##0.00"))
+
+                        Dim strdQtd_IMP As String = "(" + dQtd.ToString("#,###0.000") + "Kg)"
+                        Dim strdResultado_IMP As String = "R$ " + dResultado.ToString("#,##0.00")
+
+
+                        If SQLControl.InserirComanda(
+                                                 Produto.Codigo,
+                                                 Parametros.strCodEmpresa,
+                                                 Parametros.strCodDeposito,
+                                                 Parametros.strCodVendedor,
+                                                 dQtd,
+                                                 Produto.Preco_Produto,
+                                                 dResultado,
+                                                 Parametros.strPrefixoComanda + strCodComandaDHMS,
+                                                 "1") = True Then
+                            ' Parametros.strPrefixoComanda +strCodComandaDHMS
+
+
+                            SQLControl.InserirComanda_s(
+                                                    Produto.Codigo,
+                                                    Parametros.strCodEmpresa,
+                                                    Parametros.strCodDeposito,
+                                                    Parametros.strCodVendedor,
+                                                    dQtd,
+                                                    Produto.Preco_Produto,
+                                                    dResultado,
+                                                    Parametros.strPrefixoComanda + strCodComandaDHMS,
+                                                    "1")
+                            'Parametros.strPrefixoComanda + strCodComandaDHMS
+
+                            Impressao.Imprimir(
+                                           Parametros.strPrefixoComanda + strCodComandaDHMS,
+                                           Produto.Nome,
+                                           strdQtd_IMP,
+                                           strdResultado_IMP,
+                                           Parametros.strImpCodBarr,
+                                           Parametros.strImpQRCod,
+                                           Parametros.strImpLogo,
+                                           False
+                                          )
+
+                        Else
+                            Application.Restart()
+                        End If
+
+                        picEstado.Image = imgRetire
+                        DisplayLabel_Limpar()
+
+                        If Parametros.strVoltarPadrao = "SIM" Then
+                            wait(3000)
+                            SQLControl.ConsultarProduto(Parametros.strCodProduto, Produto, "frmPdvVenda - Tratar")
+                            DisplayLabelNomeProduto(Produto.Codigo + " - " + Produto.Nome + " (R$ " + CType(Produto.Preco_Produto, Double).ToString("#,##0.00") + ")")
+                        End If
+
                     End If
 
                 End If
@@ -877,19 +1462,36 @@ Public Class frmPdvVenda
             LogApp.GerarLogErro(ex, "frmPdvVenda", "If intContadorLeitura_Peso = 2 And CType(strDadosPortaSerial_Peso, Decimal) > 00000")
         End Try
 
+
     End Sub
 
     Sub Tratar_Loja2()
 
-        If SQLControl.Testar_Conn("frmPdvVenda - Tratar_Peso") = False Then
-            Display("Banco de dados", "Sem Conexão.")
+        If Parametros.strSistemaIntegrado = "Sischef" Then
+            If SQLControl.Testar_ConnPostgres("frmPdvVenda - Tratar_Peso") = False Then
+                Display("Banco de dados", "Sem Conexão.")
 
-            SyncLock picEstado
-                picEstado.Image = imgColoque
-                imgAtual = "imgColoque"
-            End SyncLock
-            Exit Sub
+                SyncLock picEstado
+                    picEstado.Image = imgColoque
+                    imgAtual = "imgColoque"
+                End SyncLock
+                Exit Sub
+            End If
         End If
+
+
+        If Parametros.strSistemaIntegrado = "Sismoura" Then
+            If SQLControl.Testar_Conn("frmPdvVenda - Tratar_Peso") = False Then
+                Display("Banco de dados", "Sem Conexão.")
+
+                SyncLock picEstado
+                    picEstado.Image = imgColoque
+                    imgAtual = "imgColoque"
+                End SyncLock
+                Exit Sub
+            End If
+        End If
+
 
 
 #Region "TRATAR PESO BALANÇA"
@@ -944,1036 +1546,354 @@ Public Class frmPdvVenda
         Try
             If intContadorLeitura_Peso = 4 And CType(strDadosPortaSerial_Peso, Decimal) > "00000" Then
 
-                'F5
-                If lblNomeProduto.Text.Contains("CONVENIO") Then
-
-                    If CType(strDadosPortaSerial_Peso, Decimal) >= "00001" And
-                       CType(strDadosPortaSerial_Peso, Decimal) <= "00538" Then
-
-#Region "PARAMETROS - CODIGO COMANDA"
-
-                        'Dim strCodComandaDHMS As String = Format(Now, "ddhhmmss")
-                        Dim strCodComandaDHMS As String = String.Empty
-
-                        If Parametros.strPrefixoComanda = "Nenhum" Then
-                            Parametros.strPrefixoComanda = ""
-                        End If
-
-                        If Parametros.strModoAuto = "Dia - Hora - Min - Seg" Then
-                            strCodComandaDHMS = Format(Now, "ddHHmmss")
-                        End If
-
-                        If Parametros.strModoAuto = "Sequencial" Then
-                            If ComandaAtivaCodigo = String.Empty Then
-                                strCodComandaDHMS = SQLControl.GetCodigoUltimaComanda_Config("frmPdvVenda - Tratar_Peso")
-
-                                If strCodComandaDHMS = "0" Or strCodComandaDHMS = "" Or strCodComandaDHMS = String.Empty Then
-                                    strCodComandaDHMS = "1"
-                                End If
-                            End If
-                        End If
-
-                        If ComandaAtivaCodigo <> String.Empty Then
-                            strCodComandaDHMS = ComandaAtivaCodigo
-                        End If
-#End Region
-
-                        SQLControl.ConsultarProduto(Parametros.CodSelf4, Produto, "frmPdvVenda - Tratar")
-                        DisplayLabelNomeProduto(Produto.Codigo + " - " + Produto.Nome + " (R$ " + CType(Produto.Preco_Produto, Decimal).ToString("#,##0.00") + ")")
-
-                        Dim dValor As Decimal = Produto.Preco_Produto
-                        Dim dQtd As Decimal = CType(strDadosPortaSerial_Peso, Decimal) / 1000
-                        Dim dResultado As Decimal = dQtd * dValor
-
-                        Display(
-                        dQtd.ToString("#,###0.000"),
-                        dResultado.ToString("#,##0.00"))
-
-                        Dim strdQtd_IMP As String = "(" + dQtd.ToString("#,###0.000") + "Kg)"
-                        Dim strdResultado_IMP As String = "R$ " + dResultado.ToString("#,##0.00")
-
-                        If SQLControl.InserirComanda(
-                                                 Produto.Codigo,
-                                                 Parametros.strCodEmpresa,
-                                                 Parametros.strCodDeposito,
-                                                 Parametros.strCodVendedor,
-                                                 dQtd,
-                                                 Produto.Preco_Produto,
-                                                 dResultado,
-                                                 Parametros.strPrefixoComanda + strCodComandaDHMS,
-                                                 "1"
-                                                 ) = True Then
 
 
-                            SQLControl.InserirComanda_s(Produto.Codigo,
-                                                    Parametros.strCodEmpresa,
-                                                    Parametros.strCodDeposito,
-                                                    Parametros.strCodVendedor,
-                                                    dQtd,
-                                                    Produto.Preco_Produto,
-                                                    dResultado,
-                                                    Parametros.strPrefixoComanda + strCodComandaDHMS,
-                                                    "1"
-                                                    )
+                If Parametros.strSistemaIntegrado = "Sischef" Then
 
-                            Impressao.Imprimir(
-                                           Parametros.strPrefixoComanda + strCodComandaDHMS,
-                                           Produto.Nome,
-                                           strdQtd_IMP,
-                                           strdResultado_IMP,
-                                           Parametros.strImpCodBarr,
-                                           Parametros.strImpQRCod,
-                                           Parametros.strImpLogo, False
-                                           )
-                        Else
-                            Application.Restart()
-                        End If
+                    'F5
+                    If lblNomeProduto.Text.Contains("CONVENIO") Then
 
-                        If imgAtual <> "imgRetire" Then
-                            picEstado.Image = imgRetire
-                            imgAtual = "imgRetire"
-                        End If
-                        DisplayLabel_Limpar()
-                        If Parametros.strVoltarPadrao = "SIM" Then
-                            wait(3000)
-                            SQLControl.ConsultarProduto(Parametros.strCodProduto, Produto, "frmPdvVenda - Tratar_Peso")
-                            DisplayLabelNomeProduto(Produto.Codigo + " - " + Produto.Nome + " (R$ " + CType(Produto.Preco_Produto, Decimal).ToString("#,##0.00") + ")")
-                        End If
-                    End If
-
-
-                    If CType(strDadosPortaSerial_Peso, Decimal) >= "00539" And
-                       CType(strDadosPortaSerial_Peso, Decimal) <= "00750" Then
+                        If CType(strDadosPortaSerial_Peso, Decimal) >= "00001" And
+                           CType(strDadosPortaSerial_Peso, Decimal) <= "00538" Then
 
 #Region "PARAMETROS - CODIGO COMANDA"
 
-                        'Dim strCodComandaDHMS As String = Format(Now, "ddhhmmss")
-                        Dim strCodComandaDHMS As String = String.Empty
+                            'Dim strCodComandaDHMS As String = Format(Now, "ddhhmmss")
+                            Dim strCodComandaDHMS As String = String.Empty
 
-                        If Parametros.strPrefixoComanda = "Nenhum" Then
-                            Parametros.strPrefixoComanda = ""
-                        End If
+                            If Parametros.strPrefixoComanda = "Nenhum" Then
+                                Parametros.strPrefixoComanda = ""
+                            End If
 
-                        If Parametros.strModoAuto = "Dia - Hora - Min - Seg" Then
-                            strCodComandaDHMS = Format(Now, "ddHHmmss")
-                        End If
+                            If Parametros.strModoAuto = "Dia - Hora - Min - Seg" Then
+                                strCodComandaDHMS = Format(Now, "ddHHmmss")
+                            End If
 
-                        If Parametros.strModoAuto = "Sequencial" Then
-                            If ComandaAtivaCodigo = String.Empty Then
-                                strCodComandaDHMS = SQLControl.GetCodigoUltimaComanda_Config("frmPdvVenda - Tratar_Peso")
+                            If Parametros.strModoAuto = "Sequencial" Then
+                                If ComandaAtivaCodigo = String.Empty Then
+                                    strCodComandaDHMS = SQLControl.GetCodigoUltimaComanda_ConfigPostgres("frmPdvVenda - Tratar_Peso")
 
-                                If strCodComandaDHMS = "0" Or strCodComandaDHMS = "" Or strCodComandaDHMS = String.Empty Then
-                                    strCodComandaDHMS = "1"
+                                    If strCodComandaDHMS = "0" Or strCodComandaDHMS = "" Or strCodComandaDHMS = String.Empty Then
+                                        strCodComandaDHMS = "1"
+                                    End If
                                 End If
+                            End If
+
+                            If ComandaAtivaCodigo <> String.Empty Then
+                                strCodComandaDHMS = ComandaAtivaCodigo
+                            End If
+#End Region
+
+                            SQLControl.ConsultarProdutoPostgres(Parametros.CodSelf4, Produto, "frmPdvVenda - Tratar")
+                            DisplayLabelNomeProduto(Produto.Codigo + " - " + Produto.Nome + " (R$ " + CType(Produto.Preco_Produto, Decimal).ToString("#,##0.00") + ")")
+
+                            Dim dValor As Decimal = Produto.Preco_Produto
+                            Dim dQtd As Decimal = CType(strDadosPortaSerial_Peso, Decimal) / 1000
+                            Dim dResultado As Decimal = dQtd * dValor
+
+                            Display(
+                            dQtd.ToString("#,###0.000"),
+                            dResultado.ToString("#,##0.00"))
+
+                            Dim strdQtd_IMP As String = "(" + dQtd.ToString("#,###0.000") + "Kg)"
+                            Dim strdResultado_IMP As String = "R$ " + dResultado.ToString("#,##0.00")
+
+                            If SQLControl.InserirComandaPostgres(
+                                                     Produto.Codigo,
+                                                     Parametros.strCodEmpresa,
+                                                     Parametros.strCodDeposito,
+                                                     Parametros.strCodVendedor,
+                                                     dQtd,
+                                                     Produto.Preco_Produto,
+                                                     dResultado,
+                                                     Parametros.strPrefixoComanda + strCodComandaDHMS,
+                                                     "1"
+                                                     ) = True Then
+
+
+                                SQLControl.InserirComanda_sPostgres(Produto.Codigo,
+                                                        Parametros.strCodEmpresa,
+                                                        Parametros.strCodDeposito,
+                                                        Parametros.strCodVendedor,
+                                                        dQtd,
+                                                        Produto.Preco_Produto,
+                                                        dResultado,
+                                                        Parametros.strPrefixoComanda + strCodComandaDHMS,
+                                                        "1"
+                                                        )
+
+                                Impressao.Imprimir(
+                                               Parametros.strPrefixoComanda + strCodComandaDHMS,
+                                               Produto.Nome,
+                                               strdQtd_IMP,
+                                               strdResultado_IMP,
+                                               Parametros.strImpCodBarr,
+                                               Parametros.strImpQRCod,
+                                               Parametros.strImpLogo, False
+                                               )
+                            Else
+                                Application.Restart()
+                            End If
+
+                            If imgAtual <> "imgRetire" Then
+                                picEstado.Image = imgRetire
+                                imgAtual = "imgRetire"
+                            End If
+                            DisplayLabel_Limpar()
+                            If Parametros.strVoltarPadrao = "SIM" Then
+                                wait(3000)
+                                SQLControl.ConsultarProdutoPostgres(Parametros.strCodProduto, Produto, "frmPdvVenda - Tratar_Peso")
+                                DisplayLabelNomeProduto(Produto.Codigo + " - " + Produto.Nome + " (R$ " + CType(Produto.Preco_Produto, Decimal).ToString("#,##0.00") + ")")
                             End If
                         End If
 
-                        If ComandaAtivaCodigo <> String.Empty Then
-                            strCodComandaDHMS = ComandaAtivaCodigo
-                        End If
+
+                        If CType(strDadosPortaSerial_Peso, Decimal) >= "00539" And
+                           CType(strDadosPortaSerial_Peso, Decimal) <= "00750" Then
+
+#Region "PARAMETROS - CODIGO COMANDA"
+
+                            'Dim strCodComandaDHMS As String = Format(Now, "ddhhmmss")
+                            Dim strCodComandaDHMS As String = String.Empty
+
+                            If Parametros.strPrefixoComanda = "Nenhum" Then
+                                Parametros.strPrefixoComanda = ""
+                            End If
+
+                            If Parametros.strModoAuto = "Dia - Hora - Min - Seg" Then
+                                strCodComandaDHMS = Format(Now, "ddHHmmss")
+                            End If
+
+                            If Parametros.strModoAuto = "Sequencial" Then
+                                If ComandaAtivaCodigo = String.Empty Then
+                                    strCodComandaDHMS = SQLControl.GetCodigoUltimaComanda_ConfigPostgres("frmPdvVenda - Tratar_Peso")
+
+                                    If strCodComandaDHMS = "0" Or strCodComandaDHMS = "" Or strCodComandaDHMS = String.Empty Then
+                                        strCodComandaDHMS = "1"
+                                    End If
+                                End If
+                            End If
+
+                            If ComandaAtivaCodigo <> String.Empty Then
+                                strCodComandaDHMS = ComandaAtivaCodigo
+                            End If
 
 #End Region
 
-                        SQLControl.ConsultarProduto(Parametros.CodSelf5, Produto, "frmPdvVenda - Tratar_Peso")
-                        DisplayLabelNomeProduto(Produto.Codigo + " - " + Produto.Nome + " (R$ " + CType(Produto.Preco_Produto, Decimal).ToString("#,##0.00") + ")")
-
-                        Dim dValor As Decimal = Produto.Preco_Produto
-                        Dim dQtd As Decimal = CType(strDadosPortaSerial_Peso, Decimal) / 1000
-                        Dim dQtd_UN As Decimal = 1
-                        Dim dResultado As Decimal = dQtd * dValor
-                        Dim dResultado_UN As Decimal = dQtd_UN * dValor
-
-                        Display(
-                        dQtd.ToString("#,###0.000"),
-                        dResultado_UN.ToString("#,##0.00"))
-
-                        Dim strdQtd_IMP As String = "(" + dQtd.ToString("#,###0.000") + "Kg)"
-                        Dim strdResultado_IMP As String = "R$ " + dResultado_UN.ToString("#,##0.00")
-
-                        If SQLControl.InserirComanda(
-                                                 Produto.Codigo,
-                                                 Parametros.strCodEmpresa,
-                                                 Parametros.strCodDeposito,
-                                                 Parametros.strCodVendedor,
-                                                 dQtd_UN,
-                                                 Produto.Preco_Produto,
-                                                 dResultado_UN,
-                                                 Parametros.strPrefixoComanda + strCodComandaDHMS,
-                                                 "1"
-                                                ) = True Then
-
-                            SQLControl.InserirComanda_s(Produto.Codigo,
-                                                    Parametros.strCodEmpresa,
-                                                    Parametros.strCodDeposito,
-                                                    Parametros.strCodVendedor,
-                                                    dQtd,
-                                                    Produto.Preco_Produto,
-                                                    dResultado,
-                                                    Parametros.strPrefixoComanda + strCodComandaDHMS,
-                                                    "1"
-                                                    )
-
-                            Impressao.Imprimir(
-                                           Parametros.strPrefixoComanda + strCodComandaDHMS,
-                                           Produto.Nome,
-                                           strdQtd_IMP,
-                                           strdResultado_IMP,
-                                           Parametros.strImpCodBarr,
-                                           Parametros.strImpQRCod,
-                                           Parametros.strImpLogo, False
-                                          )
-
-                        Else
-                            Application.Restart()
-                        End If
-                        DisplayLabel_Limpar()
-                        If imgAtual <> "imgRetire" Then
-                            picEstado.Image = imgRetire
-                            imgAtual = "imgRetire"
-                        End If
-                        If Parametros.strVoltarPadrao = "SIM" Then
-                            wait(3000)
-                            SQLControl.ConsultarProduto(Parametros.strCodProduto, Produto, "frmPdvVenda - Tratar_Peso")
+                            SQLControl.ConsultarProdutoPostgres(Parametros.CodSelf5, Produto, "frmPdvVenda - Tratar_Peso")
                             DisplayLabelNomeProduto(Produto.Codigo + " - " + Produto.Nome + " (R$ " + CType(Produto.Preco_Produto, Decimal).ToString("#,##0.00") + ")")
+
+                            Dim dValor As Decimal = Produto.Preco_Produto
+                            Dim dQtd As Decimal = CType(strDadosPortaSerial_Peso, Decimal) / 1000
+                            Dim dQtd_UN As Decimal = 1
+                            Dim dResultado As Decimal = dQtd * dValor
+                            Dim dResultado_UN As Decimal = dQtd_UN * dValor
+
+                            Display(
+                            dQtd.ToString("#,###0.000"),
+                            dResultado_UN.ToString("#,##0.00"))
+
+                            Dim strdQtd_IMP As String = "(" + dQtd.ToString("#,###0.000") + "Kg)"
+                            Dim strdResultado_IMP As String = "R$ " + dResultado_UN.ToString("#,##0.00")
+
+                            If SQLControl.InserirComandaPostgres(
+                                                     Produto.Codigo,
+                                                     Parametros.strCodEmpresa,
+                                                     Parametros.strCodDeposito,
+                                                     Parametros.strCodVendedor,
+                                                     dQtd_UN,
+                                                     Produto.Preco_Produto,
+                                                     dResultado_UN,
+                                                     Parametros.strPrefixoComanda + strCodComandaDHMS,
+                                                     "1"
+                                                    ) = True Then
+
+                                SQLControl.InserirComanda_sPostgres(Produto.Codigo,
+                                                        Parametros.strCodEmpresa,
+                                                        Parametros.strCodDeposito,
+                                                        Parametros.strCodVendedor,
+                                                        dQtd,
+                                                        Produto.Preco_Produto,
+                                                        dResultado,
+                                                        Parametros.strPrefixoComanda + strCodComandaDHMS,
+                                                        "1"
+                                                        )
+
+                                Impressao.Imprimir(
+                                               Parametros.strPrefixoComanda + strCodComandaDHMS,
+                                               Produto.Nome,
+                                               strdQtd_IMP,
+                                               strdResultado_IMP,
+                                               Parametros.strImpCodBarr,
+                                               Parametros.strImpQRCod,
+                                               Parametros.strImpLogo, False
+                                              )
+
+                            Else
+                                Application.Restart()
+                            End If
+                            DisplayLabel_Limpar()
+                            If imgAtual <> "imgRetire" Then
+                                picEstado.Image = imgRetire
+                                imgAtual = "imgRetire"
+                            End If
+                            If Parametros.strVoltarPadrao = "SIM" Then
+                                wait(3000)
+                                SQLControl.ConsultarProdutoPostgres(Parametros.strCodProduto, Produto, "frmPdvVenda - Tratar_Peso")
+                                DisplayLabelNomeProduto(Produto.Codigo + " - " + Produto.Nome + " (R$ " + CType(Produto.Preco_Produto, Decimal).ToString("#,##0.00") + ")")
+                            End If
+                            Exit Sub
+
                         End If
+
+
+                        If CType(strDadosPortaSerial_Peso, Decimal) >= "00751" Then
+
+#Region "PARAMETROS - CODIGO COMANDA"
+
+                            'Dim strCodComandaDHMS As String = Format(Now, "ddhhmmss")
+                            Dim strCodComandaDHMS As String = String.Empty
+
+                            If Parametros.strPrefixoComanda = "Nenhum" Then
+                                Parametros.strPrefixoComanda = ""
+                            End If
+
+                            If Parametros.strModoAuto = "Dia - Hora - Min - Seg" Then
+                                strCodComandaDHMS = Format(Now, "ddHHmmss")
+                            End If
+
+                            If Parametros.strModoAuto = "Sequencial" Then
+                                If ComandaAtivaCodigo = String.Empty Then
+                                    strCodComandaDHMS = SQLControl.GetCodigoUltimaComanda_ConfigPostgres("frmPdvVenda - Tratar_Peso")
+
+                                    If strCodComandaDHMS = "0" Or strCodComandaDHMS = "" Or strCodComandaDHMS = String.Empty Then
+                                        strCodComandaDHMS = "1"
+                                    End If
+                                End If
+                            End If
+
+                            If ComandaAtivaCodigo <> String.Empty Then
+                                strCodComandaDHMS = ComandaAtivaCodigo
+                            End If
+
+#End Region
+                            'Parametros.strCodProduto2
+                            SQLControl.ConsultarProdutoPostgres(Parametros.CodSelf6, Produto, "frmPdvVenda - Tratar_Peso")
+                            DisplayLabelNomeProduto(Produto.Codigo + " - " + Produto.Nome + " (R$ " + CType(Produto.Preco_Produto, Decimal).ToString("#,##0.00") + ")")
+
+                            Dim dValor As Decimal = Produto.Preco_Produto
+                            Dim dQtd As Decimal = CType(strDadosPortaSerial_Peso, Decimal) / 1000
+                            Dim dQtd_UN As Decimal = 1
+                            Dim dResultado As Decimal = dQtd * dValor
+                            Dim dResultado_UN As Decimal = dQtd_UN * dValor
+
+                            Display(
+                            dQtd.ToString("#,###0.000"),
+                            dResultado_UN.ToString("#,##0.00"))
+
+                            Dim strdQtd_IMP As String = "(" + dQtd.ToString("#,###0.000") + "Kg)"
+                            Dim strdResultado_IMP As String = "R$ " + dResultado_UN.ToString("#,##0.00")
+
+                            If SQLControl.InserirComandaPostgres(
+                                                     Produto.Codigo,
+                                                     Parametros.strCodEmpresa,
+                                                     Parametros.strCodDeposito,
+                                                     Parametros.strCodVendedor,
+                                                     dQtd_UN,
+                                                     Produto.Preco_Produto,
+                                                     dResultado_UN,
+                                                     Parametros.strPrefixoComanda + strCodComandaDHMS,
+                                                     "1"
+                                                    ) = True Then
+
+                                SQLControl.InserirComanda_sPostgres(Produto.Codigo,
+                                                        Parametros.strCodEmpresa,
+                                                        Parametros.strCodDeposito,
+                                                        Parametros.strCodVendedor,
+                                                        dQtd,
+                                                        Produto.Preco_Produto,
+                                                        dResultado,
+                                                        Parametros.strPrefixoComanda + strCodComandaDHMS,
+                                                        "1"
+                                                        )
+
+                                Impressao.Imprimir(
+                                               Parametros.strPrefixoComanda + strCodComandaDHMS,
+                                               Produto.Nome,
+                                               strdQtd_IMP,
+                                               strdResultado_IMP,
+                                               Parametros.strImpCodBarr,
+                                               Parametros.strImpQRCod,
+                                               Parametros.strImpLogo, False
+                                              )
+
+                            Else
+                                Application.Restart()
+                            End If
+                            DisplayLabel_Limpar()
+                            If imgAtual <> "imgRetire" Then
+                                picEstado.Image = imgRetire
+                                imgAtual = "imgRetire"
+                            End If
+                            If Parametros.strVoltarPadrao = "SIM" Then
+                                wait(3000)
+                                SQLControl.ConsultarProdutoPostgres(Parametros.strCodProduto, Produto, "frmPdvVenda - Tratar_Peso")
+                                DisplayLabelNomeProduto(Produto.Codigo + " - " + Produto.Nome + " (R$ " + CType(Produto.Preco_Produto, Decimal).ToString("#,##0.00") + ")")
+                            End If
+                            Exit Sub
+
+                        End If
+
                         Exit Sub
-
                     End If
 
-
-                    If CType(strDadosPortaSerial_Peso, Decimal) >= "00751" Then
+                    'F3
+                    If lblNomeProduto.Text.Contains("CHURRASCO") Then
+                        If CType(strDadosPortaSerial_Peso, Decimal) > "00000" Then
 
 #Region "PARAMETROS - CODIGO COMANDA"
 
-                        'Dim strCodComandaDHMS As String = Format(Now, "ddhhmmss")
-                        Dim strCodComandaDHMS As String = String.Empty
+                            'Dim strCodComandaDHMS As String = Format(Now, "ddhhmmss")
+                            Dim strCodComandaDHMS As String = String.Empty
 
-                        If Parametros.strPrefixoComanda = "Nenhum" Then
-                            Parametros.strPrefixoComanda = ""
-                        End If
+                            If Parametros.strPrefixoComanda = "Nenhum" Then
+                                Parametros.strPrefixoComanda = ""
+                            End If
 
-                        If Parametros.strModoAuto = "Dia - Hora - Min - Seg" Then
-                            strCodComandaDHMS = Format(Now, "ddHHmmss")
-                        End If
+                            If Parametros.strModoAuto = "Dia - Hora - Min - Seg" Then
+                                strCodComandaDHMS = Format(Now, "ddHHmmss")
+                            End If
 
-                        If Parametros.strModoAuto = "Sequencial" Then
-                            If ComandaAtivaCodigo = String.Empty Then
-                                strCodComandaDHMS = SQLControl.GetCodigoUltimaComanda_Config("frmPdvVenda - Tratar_Peso")
+                            If Parametros.strModoAuto = "Sequencial" Then
+                                If ComandaAtivaCodigo = String.Empty Then
+                                    strCodComandaDHMS = SQLControl.GetCodigoUltimaComanda_ConfigPostgres("frmPdvVenda - Tratar_Peso")
 
-                                If strCodComandaDHMS = "0" Or strCodComandaDHMS = "" Or strCodComandaDHMS = String.Empty Then
-                                    strCodComandaDHMS = "1"
+                                    If strCodComandaDHMS = "0" Or strCodComandaDHMS = "" Or strCodComandaDHMS = String.Empty Then
+                                        strCodComandaDHMS = "1"
+                                    End If
                                 End If
                             End If
-                        End If
 
-                        If ComandaAtivaCodigo <> String.Empty Then
-                            strCodComandaDHMS = ComandaAtivaCodigo
-                        End If
-
+                            If ComandaAtivaCodigo <> String.Empty Then
+                                strCodComandaDHMS = ComandaAtivaCodigo
+                            End If
 #End Region
-                        'Parametros.strCodProduto2
-                        SQLControl.ConsultarProduto(Parametros.CodSelf6, Produto, "frmPdvVenda - Tratar_Peso")
-                        DisplayLabelNomeProduto(Produto.Codigo + " - " + Produto.Nome + " (R$ " + CType(Produto.Preco_Produto, Decimal).ToString("#,##0.00") + ")")
 
-                        Dim dValor As Decimal = Produto.Preco_Produto
-                        Dim dQtd As Decimal = CType(strDadosPortaSerial_Peso, Decimal) / 1000
-                        Dim dQtd_UN As Decimal = 1
-                        Dim dResultado As Decimal = dQtd * dValor
-                        Dim dResultado_UN As Decimal = dQtd_UN * dValor
-
-                        Display(
-                        dQtd.ToString("#,###0.000"),
-                        dResultado_UN.ToString("#,##0.00"))
-
-                        Dim strdQtd_IMP As String = "(" + dQtd.ToString("#,###0.000") + "Kg)"
-                        Dim strdResultado_IMP As String = "R$ " + dResultado_UN.ToString("#,##0.00")
-
-                        If SQLControl.InserirComanda(
-                                                 Produto.Codigo,
-                                                 Parametros.strCodEmpresa,
-                                                 Parametros.strCodDeposito,
-                                                 Parametros.strCodVendedor,
-                                                 dQtd_UN,
-                                                 Produto.Preco_Produto,
-                                                 dResultado_UN,
-                                                 Parametros.strPrefixoComanda + strCodComandaDHMS,
-                                                 "1"
-                                                ) = True Then
-
-                            SQLControl.InserirComanda_s(Produto.Codigo,
-                                                    Parametros.strCodEmpresa,
-                                                    Parametros.strCodDeposito,
-                                                    Parametros.strCodVendedor,
-                                                    dQtd,
-                                                    Produto.Preco_Produto,
-                                                    dResultado,
-                                                    Parametros.strPrefixoComanda + strCodComandaDHMS,
-                                                    "1"
-                                                    )
-
-                            Impressao.Imprimir(
-                                           Parametros.strPrefixoComanda + strCodComandaDHMS,
-                                           Produto.Nome,
-                                           strdQtd_IMP,
-                                           strdResultado_IMP,
-                                           Parametros.strImpCodBarr,
-                                           Parametros.strImpQRCod,
-                                           Parametros.strImpLogo, False
-                                          )
-
-                        Else
-                            Application.Restart()
-                        End If
-                        DisplayLabel_Limpar()
-                        If imgAtual <> "imgRetire" Then
-                            picEstado.Image = imgRetire
-                            imgAtual = "imgRetire"
-                        End If
-                        If Parametros.strVoltarPadrao = "SIM" Then
-                            wait(3000)
-                            SQLControl.ConsultarProduto(Parametros.strCodProduto, Produto, "frmPdvVenda - Tratar_Peso")
+                            SQLControl.ConsultarProdutoPostgres(Parametros.CodChurrasco1, Produto, "frmPdvVenda - Tratar")
                             DisplayLabelNomeProduto(Produto.Codigo + " - " + Produto.Nome + " (R$ " + CType(Produto.Preco_Produto, Decimal).ToString("#,##0.00") + ")")
-                        End If
-                        Exit Sub
 
-                    End If
+                            Dim dValor As Decimal = Produto.Preco_Produto
+                            Dim dQtd As Decimal = CType(strDadosPortaSerial_Peso, Decimal) / 1000
+                            Dim dResultado As Decimal = dQtd * dValor
 
-                    Exit Sub
-                End If
+                            Display(
+                            dQtd.ToString("#,###0.000"),
+                            dResultado.ToString("#,##0.00"))
 
-                'F3
-                If lblNomeProduto.Text.Contains("CHURRASCO") Then
-                    If CType(strDadosPortaSerial_Peso, Decimal) > "00000" Then
+                            Dim strdQtd_IMP As String = "(" + dQtd.ToString("#,###0.000") + "Kg)"
+                            Dim strdResultado_IMP As String = "R$ " + dResultado.ToString("#,##0.00")
 
-#Region "PARAMETROS - CODIGO COMANDA"
-
-                        'Dim strCodComandaDHMS As String = Format(Now, "ddhhmmss")
-                        Dim strCodComandaDHMS As String = String.Empty
-
-                        If Parametros.strPrefixoComanda = "Nenhum" Then
-                            Parametros.strPrefixoComanda = ""
-                        End If
-
-                        If Parametros.strModoAuto = "Dia - Hora - Min - Seg" Then
-                            strCodComandaDHMS = Format(Now, "ddHHmmss")
-                        End If
-
-                        If Parametros.strModoAuto = "Sequencial" Then
-                            If ComandaAtivaCodigo = String.Empty Then
-                                strCodComandaDHMS = SQLControl.GetCodigoUltimaComanda_Config("frmPdvVenda - Tratar_Peso")
-
-                                If strCodComandaDHMS = "0" Or strCodComandaDHMS = "" Or strCodComandaDHMS = String.Empty Then
-                                    strCodComandaDHMS = "1"
-                                End If
-                            End If
-                        End If
-
-                        If ComandaAtivaCodigo <> String.Empty Then
-                            strCodComandaDHMS = ComandaAtivaCodigo
-                        End If
-#End Region
-
-                        SQLControl.ConsultarProduto(Parametros.CodChurrasco1, Produto, "frmPdvVenda - Tratar")
-                        DisplayLabelNomeProduto(Produto.Codigo + " - " + Produto.Nome + " (R$ " + CType(Produto.Preco_Produto, Decimal).ToString("#,##0.00") + ")")
-
-                        Dim dValor As Decimal = Produto.Preco_Produto
-                        Dim dQtd As Decimal = CType(strDadosPortaSerial_Peso, Decimal) / 1000
-                        Dim dResultado As Decimal = dQtd * dValor
-
-                        Display(
-                        dQtd.ToString("#,###0.000"),
-                        dResultado.ToString("#,##0.00"))
-
-                        Dim strdQtd_IMP As String = "(" + dQtd.ToString("#,###0.000") + "Kg)"
-                        Dim strdResultado_IMP As String = "R$ " + dResultado.ToString("#,##0.00")
-
-                        If SQLControl.InserirComanda(
-                                                 Produto.Codigo,
-                                                 Parametros.strCodEmpresa,
-                                                 Parametros.strCodDeposito,
-                                                 Parametros.strCodVendedor,
-                                                 dQtd,
-                                                 Produto.Preco_Produto,
-                                                 dResultado,
-                                                 Parametros.strPrefixoComanda + strCodComandaDHMS,
-                                                 "32"
-                                                 ) = True Then
-
-
-                            SQLControl.InserirComanda_s(Produto.Codigo,
-                                                    Parametros.strCodEmpresa,
-                                                    Parametros.strCodDeposito,
-                                                    Parametros.strCodVendedor,
-                                                    dQtd,
-                                                    Produto.Preco_Produto,
-                                                    dResultado,
-                                                    Parametros.strPrefixoComanda + strCodComandaDHMS,
-                                                    "32"
-                                                    )
-
-                            Impressao.Imprimir(
-                                           Parametros.strPrefixoComanda + strCodComandaDHMS,
-                                           Produto.Nome,
-                                           strdQtd_IMP,
-                                           strdResultado_IMP,
-                                           Parametros.strImpCodBarr,
-                                           Parametros.strImpQRCod,
-                                           Parametros.strImpLogo, False
-                                           )
-                        Else
-                            Application.Restart()
-                        End If
-
-                        If imgAtual <> "imgRetire" Then
-                            picEstado.Image = imgRetire
-                            imgAtual = "imgRetire"
-                        End If
-
-                        DisplayLabel_Limpar()
-                        If Parametros.strVoltarPadrao = "SIM" Then
-                            wait(3000)
-                            SQLControl.ConsultarProduto(Parametros.strCodProduto, Produto, "frmPdvVenda - Tratar_Peso")
-                            DisplayLabelNomeProduto(Produto.Codigo + " - " + Produto.Nome + " (R$ " + CType(Produto.Preco_Produto, Decimal).ToString("#,##0.00") + ")")
-                        End If
-                    End If
-                    Exit Sub
-                End If
-
-                'F2
-                If lblNomeProduto.Text.Contains("MARMITEX") Then
-                    If CType(strDadosPortaSerial_Peso, Decimal) >= "00001" And
-                   CType(strDadosPortaSerial_Peso, Decimal) <= "00538" Then
-
-#Region "PARAMETROS - CODIGO COMANDA"
-
-                        'Dim strCodComandaDHMS As String = Format(Now, "ddhhmmss")
-                        Dim strCodComandaDHMS As String = String.Empty
-
-                        If Parametros.strPrefixoComanda = "Nenhum" Then
-                            Parametros.strPrefixoComanda = ""
-                        End If
-
-                        If Parametros.strModoAuto = "Dia - Hora - Min - Seg" Then
-                            strCodComandaDHMS = Format(Now, "ddHHmmss")
-                        End If
-
-                        If Parametros.strModoAuto = "Sequencial" Then
-                            If ComandaAtivaCodigo = String.Empty Then
-                                strCodComandaDHMS = SQLControl.GetCodigoUltimaComanda_Config("frmPdvVenda - Tratar_Peso")
-
-                                If strCodComandaDHMS = "0" Or strCodComandaDHMS = "" Or strCodComandaDHMS = String.Empty Then
-                                    strCodComandaDHMS = "1"
-                                End If
-                            End If
-                        End If
-
-                        If ComandaAtivaCodigo <> String.Empty Then
-                            strCodComandaDHMS = ComandaAtivaCodigo
-                        End If
-#End Region
-
-                        SQLControl.ConsultarProduto(Parametros.CodMarmitex1, Produto, "frmPdvVenda - Tratar")
-                        DisplayLabelNomeProduto(Produto.Codigo + " - " + Produto.Nome + " (R$ " + CType(Produto.Preco_Produto, Decimal).ToString("#,##0.00") + ")")
-
-                        Dim dValor As Decimal = Produto.Preco_Produto
-                        Dim dQtd As Decimal = CType(strDadosPortaSerial_Peso, Decimal) / 1000
-                        Dim dResultado As Decimal = dQtd * dValor
-
-                        Display(
-                        dQtd.ToString("#,###0.000"),
-                        dResultado.ToString("#,##0.00"))
-
-                        Dim strdQtd_IMP As String = "(" + dQtd.ToString("#,###0.000") + "Kg)"
-                        Dim strdResultado_IMP As String = "R$ " + dResultado.ToString("#,##0.00")
-
-                        If SQLControl.InserirComanda(
-                                                 Produto.Codigo,
-                                                 Parametros.strCodEmpresa,
-                                                 Parametros.strCodDeposito,
-                                                 Parametros.strCodVendedor,
-                                                 dQtd,
-                                                 Produto.Preco_Produto,
-                                                 dResultado,
-                                                 Parametros.strPrefixoComanda + strCodComandaDHMS,
-                                                 "32"
-                                                 ) = True Then
-
-
-                            SQLControl.InserirComanda_s(Produto.Codigo,
-                                                    Parametros.strCodEmpresa,
-                                                    Parametros.strCodDeposito,
-                                                    Parametros.strCodVendedor,
-                                                    dQtd,
-                                                    Produto.Preco_Produto,
-                                                    dResultado,
-                                                    Parametros.strPrefixoComanda + strCodComandaDHMS,
-                                                    "32"
-                                                    )
-
-                            Impressao.Imprimir(
-                                           Parametros.strPrefixoComanda + strCodComandaDHMS,
-                                           Produto.Nome,
-                                           strdQtd_IMP,
-                                           strdResultado_IMP,
-                                           Parametros.strImpCodBarr,
-                                           Parametros.strImpQRCod,
-                                           Parametros.strImpLogo, False
-                                           )
-                        Else
-                            Application.Restart()
-                        End If
-
-                        If imgAtual <> "imgRetire" Then
-                            picEstado.Image = imgRetire
-                            imgAtual = "imgRetire"
-                        End If
-                        DisplayLabel_Limpar()
-                        If Parametros.strVoltarPadrao = "SIM" Then
-                            wait(3000)
-                            SQLControl.ConsultarProduto(Parametros.strCodProduto, Produto, "frmPdvVenda - Tratar_Peso")
-                            DisplayLabelNomeProduto(Produto.Codigo + " - " + Produto.Nome + " (R$ " + CType(Produto.Preco_Produto, Decimal).ToString("#,##0.00") + ")")
-                        End If
-                    End If
-
-
-                    If CType(strDadosPortaSerial_Peso, Decimal) >= "00539" And
-                        CType(strDadosPortaSerial_Peso, Decimal) <= "00750" Then
-
-#Region "PARAMETROS - CODIGO COMANDA"
-
-                        'Dim strCodComandaDHMS As String = Format(Now, "ddhhmmss")
-                        Dim strCodComandaDHMS As String = String.Empty
-
-                        If Parametros.strPrefixoComanda = "Nenhum" Then
-                            Parametros.strPrefixoComanda = ""
-                        End If
-
-                        If Parametros.strModoAuto = "Dia - Hora - Min - Seg" Then
-                            strCodComandaDHMS = Format(Now, "ddHHmmss")
-                        End If
-
-                        If Parametros.strModoAuto = "Sequencial" Then
-                            If ComandaAtivaCodigo = String.Empty Then
-                                strCodComandaDHMS = SQLControl.GetCodigoUltimaComanda_Config("frmPdvVenda - Tratar_Peso")
-
-                                If strCodComandaDHMS = "0" Or strCodComandaDHMS = "" Or strCodComandaDHMS = String.Empty Then
-                                    strCodComandaDHMS = "1"
-                                End If
-                            End If
-                        End If
-
-                        If ComandaAtivaCodigo <> String.Empty Then
-                            strCodComandaDHMS = ComandaAtivaCodigo
-                        End If
-
-#End Region
-
-                        SQLControl.ConsultarProduto(Parametros.CodMarmitex2, Produto, "frmPdvVenda - Tratar_Peso")
-                        DisplayLabelNomeProduto(Produto.Codigo + " - " + Produto.Nome + " (R$ " + CType(Produto.Preco_Produto, Decimal).ToString("#,##0.00") + ")")
-
-                        Dim dValor As Decimal = Produto.Preco_Produto
-                        Dim dQtd As Decimal = CType(strDadosPortaSerial_Peso, Decimal) / 1000
-                        Dim dQtd_UN As Decimal = 1
-                        Dim dResultado As Decimal = dQtd * dValor
-                        Dim dResultado_UN As Decimal = dQtd_UN * dValor
-
-                        Display(
-                        dQtd.ToString("#,###0.000"),
-                        dResultado_UN.ToString("#,##0.00"))
-
-                        Dim strdQtd_IMP As String = "(" + dQtd.ToString("#,###0.000") + "Kg)"
-                        Dim strdResultado_IMP As String = "R$ " + dResultado_UN.ToString("#,##0.00")
-
-                        If SQLControl.InserirComanda(
-                                                 Produto.Codigo,
-                                                 Parametros.strCodEmpresa,
-                                                 Parametros.strCodDeposito,
-                                                 Parametros.strCodVendedor,
-                                                 dQtd_UN,
-                                                 Produto.Preco_Produto,
-                                                 dResultado_UN,
-                                                 Parametros.strPrefixoComanda + strCodComandaDHMS,
-                                                 "32"
-                                                ) = True Then
-
-                            SQLControl.InserirComanda_s(Produto.Codigo,
-                                                    Parametros.strCodEmpresa,
-                                                    Parametros.strCodDeposito,
-                                                    Parametros.strCodVendedor,
-                                                    dQtd,
-                                                    Produto.Preco_Produto,
-                                                    dResultado,
-                                                    Parametros.strPrefixoComanda + strCodComandaDHMS,
-                                                    "32"
-                                                    )
-
-                            Impressao.Imprimir(
-                                           Parametros.strPrefixoComanda + strCodComandaDHMS,
-                                           Produto.Nome,
-                                           strdQtd_IMP,
-                                           strdResultado_IMP,
-                                           Parametros.strImpCodBarr,
-                                           Parametros.strImpQRCod,
-                                           Parametros.strImpLogo, False
-                                          )
-
-                        Else
-                            Application.Restart()
-                        End If
-                        DisplayLabel_Limpar()
-                        picEstado.Image = imgRetire
-                        If Parametros.strVoltarPadrao = "SIM" Then
-                            wait(3000)
-                            SQLControl.ConsultarProduto(Parametros.strCodProduto, Produto, "frmPdvVenda - Tratar_Peso")
-                            DisplayLabelNomeProduto(Produto.Codigo + " - " + Produto.Nome + " (R$ " + CType(Produto.Preco_Produto, Decimal).ToString("#,##0.00") + ")")
-                        End If
-                        Exit Sub
-
-                    End If
-
-
-                    If CType(strDadosPortaSerial_Peso, Decimal) >= "00751" Then
-
-#Region "PARAMETROS - CODIGO COMANDA"
-
-                        'Dim strCodComandaDHMS As String = Format(Now, "ddhhmmss")
-                        Dim strCodComandaDHMS As String = String.Empty
-
-                        If Parametros.strPrefixoComanda = "Nenhum" Then
-                            Parametros.strPrefixoComanda = ""
-                        End If
-
-                        If Parametros.strModoAuto = "Dia - Hora - Min - Seg" Then
-                            strCodComandaDHMS = Format(Now, "ddHHmmss")
-                        End If
-
-                        If Parametros.strModoAuto = "Sequencial" Then
-                            If ComandaAtivaCodigo = String.Empty Then
-                                strCodComandaDHMS = SQLControl.GetCodigoUltimaComanda_Config("frmPdvVenda - Tratar_Peso")
-
-                                If strCodComandaDHMS = "0" Or strCodComandaDHMS = "" Or strCodComandaDHMS = String.Empty Then
-                                    strCodComandaDHMS = "1"
-                                End If
-                            End If
-                        End If
-
-                        If ComandaAtivaCodigo <> String.Empty Then
-                            strCodComandaDHMS = ComandaAtivaCodigo
-                        End If
-
-#End Region
-                        'Parametros.strCodProduto2
-                        SQLControl.ConsultarProduto(Parametros.CodMarmitex3, Produto, "frmPdvVenda - Tratar_Peso")
-                        DisplayLabelNomeProduto(Produto.Codigo + " - " + Produto.Nome + " (R$ " + CType(Produto.Preco_Produto, Decimal).ToString("#,##0.00") + ")")
-
-                        Dim dValor As Decimal = Produto.Preco_Produto
-                        Dim dQtd As Decimal = CType(strDadosPortaSerial_Peso, Decimal) / 1000
-                        Dim dQtd_UN As Decimal = 1
-                        Dim dResultado As Decimal = dQtd * dValor
-                        Dim dResultado_UN As Decimal = dQtd_UN * dValor
-
-                        Display(
-                        dQtd.ToString("#,###0.000"),
-                        dResultado_UN.ToString("#,##0.00"))
-
-                        Dim strdQtd_IMP As String = "(" + dQtd.ToString("#,###0.000") + "Kg)"
-                        Dim strdResultado_IMP As String = "R$ " + dResultado_UN.ToString("#,##0.00")
-
-                        If SQLControl.InserirComanda(
-                                                 Produto.Codigo,
-                                                 Parametros.strCodEmpresa,
-                                                 Parametros.strCodDeposito,
-                                                 Parametros.strCodVendedor,
-                                                 dQtd_UN,
-                                                 Produto.Preco_Produto,
-                                                 dResultado_UN,
-                                                 Parametros.strPrefixoComanda + strCodComandaDHMS,
-                                                 "32"
-                                                ) = True Then
-
-                            SQLControl.InserirComanda_s(Produto.Codigo,
-                                                    Parametros.strCodEmpresa,
-                                                    Parametros.strCodDeposito,
-                                                    Parametros.strCodVendedor,
-                                                    dQtd,
-                                                    Produto.Preco_Produto,
-                                                    dResultado,
-                                                    Parametros.strPrefixoComanda + strCodComandaDHMS,
-                                                    "32"
-                                                    )
-
-                            Impressao.Imprimir(
-                                           Parametros.strPrefixoComanda + strCodComandaDHMS,
-                                           Produto.Nome,
-                                           strdQtd_IMP,
-                                           strdResultado_IMP,
-                                           Parametros.strImpCodBarr,
-                                           Parametros.strImpQRCod,
-                                           Parametros.strImpLogo, False
-                                          )
-
-                        Else
-                            Application.Restart()
-                        End If
-                        DisplayLabel_Limpar()
-
-                        If imgAtual <> "imgRetire" Then
-                            picEstado.Image = imgRetire
-                            imgAtual = "imgRetire"
-                        End If
-                        If Parametros.strVoltarPadrao = "SIM" Then
-                            wait(3000)
-                            SQLControl.ConsultarProduto(Parametros.strCodProduto, Produto, "frmPdvVenda - Tratar_Peso")
-                            DisplayLabelNomeProduto(Produto.Codigo + " - " + Produto.Nome + " (R$ " + CType(Produto.Preco_Produto, Decimal).ToString("#,##0.00") + ")")
-                        End If
-                        Exit Sub
-
-                    End If
-                    Exit Sub
-                End If
-
-                'F1
-                If lblNomeProduto.Text.Contains("SELF") Then
-
-                    If CType(strDadosPortaSerial_Peso, Decimal) >= "00001" And
-                       CType(strDadosPortaSerial_Peso, Decimal) <= "00538" Then
-
-#Region "PARAMETROS - CODIGO COMANDA"
-
-                        'Dim strCodComandaDHMS As String = Format(Now, "ddhhmmss")
-                        Dim strCodComandaDHMS As String = String.Empty
-
-                        If Parametros.strPrefixoComanda = "Nenhum" Then
-                            Parametros.strPrefixoComanda = ""
-                        End If
-
-                        If Parametros.strModoAuto = "Dia - Hora - Min - Seg" Then
-                            strCodComandaDHMS = Format(Now, "ddHHmmss")
-                        End If
-
-                        If Parametros.strModoAuto = "Sequencial" Then
-                            If ComandaAtivaCodigo = String.Empty Then
-                                strCodComandaDHMS = SQLControl.GetCodigoUltimaComanda_Config("frmPdvVenda - Tratar_Peso")
-
-                                If strCodComandaDHMS = "0" Or strCodComandaDHMS = "" Or strCodComandaDHMS = String.Empty Then
-                                    strCodComandaDHMS = "1"
-                                End If
-                            End If
-                        End If
-
-                        If ComandaAtivaCodigo <> String.Empty Then
-                            strCodComandaDHMS = ComandaAtivaCodigo
-                        End If
-#End Region
-
-                        SQLControl.ConsultarProduto(Parametros.CodSelf1, Produto, "frmPdvVenda - Tratar")
-                        DisplayLabelNomeProduto(Produto.Codigo + " - " + Produto.Nome + " (R$ " + CType(Produto.Preco_Produto, Decimal).ToString("#,##0.00") + ")")
-
-                        Dim dValor As Decimal = Produto.Preco_Produto
-                        Dim dQtd As Decimal = CType(strDadosPortaSerial_Peso, Decimal) / 1000
-                        Dim dResultado As Decimal = dQtd * dValor
-
-                        Display(
-                        dQtd.ToString("#,###0.000"),
-                        dResultado.ToString("#,##0.00"))
-
-                        Dim strdQtd_IMP As String = "(" + dQtd.ToString("#,###0.000") + "Kg)"
-                        Dim strdResultado_IMP As String = "R$ " + dResultado.ToString("#,##0.00")
-
-                        If SQLControl.InserirComanda(
-                                                 Produto.Codigo,
-                                                 Parametros.strCodEmpresa,
-                                                 Parametros.strCodDeposito,
-                                                 Parametros.strCodVendedor,
-                                                 dQtd,
-                                                 Produto.Preco_Produto,
-                                                 dResultado,
-                                                 Parametros.strPrefixoComanda + strCodComandaDHMS,
-                                                 "1"
-                                                 ) = True Then
-
-
-                            SQLControl.InserirComanda_s(Produto.Codigo,
-                                                    Parametros.strCodEmpresa,
-                                                    Parametros.strCodDeposito,
-                                                    Parametros.strCodVendedor,
-                                                    dQtd,
-                                                    Produto.Preco_Produto,
-                                                    dResultado,
-                                                    Parametros.strPrefixoComanda + strCodComandaDHMS,
-                                                    "1"
-                                                    )
-
-                            Impressao.Imprimir(
-                                           Parametros.strPrefixoComanda + strCodComandaDHMS,
-                                           Produto.Nome,
-                                           strdQtd_IMP,
-                                           strdResultado_IMP,
-                                           Parametros.strImpCodBarr,
-                                           Parametros.strImpQRCod,
-                                           Parametros.strImpLogo, False
-                                           )
-                        Else
-                            Application.Restart()
-                        End If
-
-                        If imgAtual <> "imgRetire" Then
-                            picEstado.Image = imgRetire
-                            imgAtual = "imgRetire"
-                        End If
-                        DisplayLabel_Limpar()
-                        If Parametros.strVoltarPadrao = "SIM" Then
-                            wait(3000)
-                            SQLControl.ConsultarProduto(Parametros.strCodProduto, Produto, "frmPdvVenda - Tratar_Peso")
-                            DisplayLabelNomeProduto(Produto.Codigo + " - " + Produto.Nome + " (R$ " + CType(Produto.Preco_Produto, Decimal).ToString("#,##0.00") + ")")
-                        End If
-                    End If
-
-
-                    If CType(strDadosPortaSerial_Peso, Decimal) >= "00539" And
-                       CType(strDadosPortaSerial_Peso, Decimal) <= "00750" Then
-
-#Region "PARAMETROS - CODIGO COMANDA"
-
-                        'Dim strCodComandaDHMS As String = Format(Now, "ddhhmmss")
-                        Dim strCodComandaDHMS As String = String.Empty
-
-                        If Parametros.strPrefixoComanda = "Nenhum" Then
-                            Parametros.strPrefixoComanda = ""
-                        End If
-
-                        If Parametros.strModoAuto = "Dia - Hora - Min - Seg" Then
-                            strCodComandaDHMS = Format(Now, "ddHHmmss")
-                        End If
-
-                        If Parametros.strModoAuto = "Sequencial" Then
-                            If ComandaAtivaCodigo = String.Empty Then
-                                strCodComandaDHMS = SQLControl.GetCodigoUltimaComanda_Config("frmPdvVenda - Tratar_Peso")
-
-                                If strCodComandaDHMS = "0" Or strCodComandaDHMS = "" Or strCodComandaDHMS = String.Empty Then
-                                    strCodComandaDHMS = "1"
-                                End If
-                            End If
-                        End If
-
-                        If ComandaAtivaCodigo <> String.Empty Then
-                            strCodComandaDHMS = ComandaAtivaCodigo
-                        End If
-
-#End Region
-
-                        SQLControl.ConsultarProduto(Parametros.CodSelf2, Produto, "frmPdvVenda - Tratar_Peso")
-                        DisplayLabelNomeProduto(Produto.Codigo + " - " + Produto.Nome + " (R$ " + CType(Produto.Preco_Produto, Decimal).ToString("#,##0.00") + ")")
-
-                        Dim dValor As Decimal = Produto.Preco_Produto
-                        Dim dQtd As Decimal = CType(strDadosPortaSerial_Peso, Decimal) / 1000
-                        Dim dQtd_UN As Decimal = 1
-                        Dim dResultado As Decimal = dQtd * dValor
-                        Dim dResultado_UN As Decimal = dQtd_UN * dValor
-
-                        Display(
-                        dQtd.ToString("#,###0.000"),
-                        dResultado_UN.ToString("#,##0.00"))
-
-                        Dim strdQtd_IMP As String = "(" + dQtd.ToString("#,###0.000") + "Kg)"
-                        Dim strdResultado_IMP As String = "R$ " + dResultado_UN.ToString("#,##0.00")
-
-                        If SQLControl.InserirComanda(
-                                                 Produto.Codigo,
-                                                 Parametros.strCodEmpresa,
-                                                 Parametros.strCodDeposito,
-                                                 Parametros.strCodVendedor,
-                                                 dQtd_UN,
-                                                 Produto.Preco_Produto,
-                                                 dResultado_UN,
-                                                 Parametros.strPrefixoComanda + strCodComandaDHMS,
-                                                 "1"
-                                                ) = True Then
-
-                            SQLControl.InserirComanda_s(Produto.Codigo,
-                                                    Parametros.strCodEmpresa,
-                                                    Parametros.strCodDeposito,
-                                                    Parametros.strCodVendedor,
-                                                    dQtd,
-                                                    Produto.Preco_Produto,
-                                                    dResultado,
-                                                    Parametros.strPrefixoComanda + strCodComandaDHMS,
-                                                    "1"
-                                                    )
-
-                            Impressao.Imprimir(
-                                           Parametros.strPrefixoComanda + strCodComandaDHMS,
-                                           Produto.Nome,
-                                           strdQtd_IMP,
-                                           strdResultado_IMP,
-                                           Parametros.strImpCodBarr,
-                                           Parametros.strImpQRCod,
-                                           Parametros.strImpLogo, False
-                                          )
-
-                        Else
-                            Application.Restart()
-                        End If
-                        DisplayLabel_Limpar()
-                        If imgAtual <> "imgRetire" Then
-                            picEstado.Image = imgRetire
-                            imgAtual = "imgRetire"
-                        End If
-                        If Parametros.strVoltarPadrao = "SIM" Then
-                            wait(3000)
-                            SQLControl.ConsultarProduto(Parametros.strCodProduto, Produto, "frmPdvVenda - Tratar_Peso")
-                            DisplayLabelNomeProduto(Produto.Codigo + " - " + Produto.Nome + " (R$ " + CType(Produto.Preco_Produto, Decimal).ToString("#,##0.00") + ")")
-                        End If
-                        Exit Sub
-
-                    End If
-
-
-                    If CType(strDadosPortaSerial_Peso, Decimal) >= "00751" Then
-
-#Region "PARAMETROS - CODIGO COMANDA"
-
-                        'Dim strCodComandaDHMS As String = Format(Now, "ddhhmmss")
-                        Dim strCodComandaDHMS As String = String.Empty
-
-                        If Parametros.strPrefixoComanda = "Nenhum" Then
-                            Parametros.strPrefixoComanda = ""
-                        End If
-
-                        If Parametros.strModoAuto = "Dia - Hora - Min - Seg" Then
-                            strCodComandaDHMS = Format(Now, "ddHHmmss")
-                        End If
-
-                        If Parametros.strModoAuto = "Sequencial" Then
-                            If ComandaAtivaCodigo = String.Empty Then
-                                strCodComandaDHMS = SQLControl.GetCodigoUltimaComanda_Config("frmPdvVenda - Tratar_Peso")
-
-                                If strCodComandaDHMS = "0" Or strCodComandaDHMS = "" Or strCodComandaDHMS = String.Empty Then
-                                    strCodComandaDHMS = "1"
-                                End If
-                            End If
-                        End If
-
-                        If ComandaAtivaCodigo <> String.Empty Then
-                            strCodComandaDHMS = ComandaAtivaCodigo
-                        End If
-
-#End Region
-                        'Parametros.strCodProduto2
-                        SQLControl.ConsultarProduto(Parametros.CodSelf3, Produto, "frmPdvVenda - Tratar_Peso")
-                        DisplayLabelNomeProduto(Produto.Codigo + " - " + Produto.Nome + " (R$ " + CType(Produto.Preco_Produto, Decimal).ToString("#,##0.00") + ")")
-
-                        Dim dValor As Decimal = Produto.Preco_Produto
-                        Dim dQtd As Decimal = CType(strDadosPortaSerial_Peso, Decimal) / 1000
-                        Dim dQtd_UN As Decimal = 1
-                        Dim dResultado As Decimal = dQtd * dValor
-                        Dim dResultado_UN As Decimal = dQtd_UN * dValor
-
-                        Display(
-                        dQtd.ToString("#,###0.000"),
-                        dResultado_UN.ToString("#,##0.00"))
-
-                        Dim strdQtd_IMP As String = "(" + dQtd.ToString("#,###0.000") + "Kg)"
-                        Dim strdResultado_IMP As String = "R$ " + dResultado_UN.ToString("#,##0.00")
-
-                        If SQLControl.InserirComanda(
-                                                 Produto.Codigo,
-                                                 Parametros.strCodEmpresa,
-                                                 Parametros.strCodDeposito,
-                                                 Parametros.strCodVendedor,
-                                                 dQtd_UN,
-                                                 Produto.Preco_Produto,
-                                                 dResultado_UN,
-                                                 Parametros.strPrefixoComanda + strCodComandaDHMS,
-                                                 "1"
-                                                ) = True Then
-
-                            SQLControl.InserirComanda_s(Produto.Codigo,
-                                                    Parametros.strCodEmpresa,
-                                                    Parametros.strCodDeposito,
-                                                    Parametros.strCodVendedor,
-                                                    dQtd,
-                                                    Produto.Preco_Produto,
-                                                    dResultado,
-                                                    Parametros.strPrefixoComanda + strCodComandaDHMS,
-                                                    "1"
-                                                    )
-
-                            Impressao.Imprimir(
-                                           Parametros.strPrefixoComanda + strCodComandaDHMS,
-                                           Produto.Nome,
-                                           strdQtd_IMP,
-                                           strdResultado_IMP,
-                                           Parametros.strImpCodBarr,
-                                           Parametros.strImpQRCod,
-                                           Parametros.strImpLogo, False
-                                          )
-
-                        Else
-                            Application.Restart()
-                        End If
-                        DisplayLabel_Limpar()
-                        If imgAtual <> "imgRetire" Then
-                            picEstado.Image = imgRetire
-                            imgAtual = "imgRetire"
-                        End If
-                        If Parametros.strVoltarPadrao = "SIM" Then
-                            wait(3000)
-                            SQLControl.ConsultarProduto(Parametros.strCodProduto, Produto, "frmPdvVenda - Tratar_Peso")
-                            DisplayLabelNomeProduto(Produto.Codigo + " - " + Produto.Nome + " (R$ " + CType(Produto.Preco_Produto, Decimal).ToString("#,##0.00") + ")")
-                        End If
-                        Exit Sub
-
-                    End If
-
-                    Exit Sub
-                End If
-
-                'F4
-                If lblNomeProduto.Text.Contains("MARMITX") Then
-                    If CType(strDadosPortaSerial_Peso, Decimal) <> "00000" Then
-
-#Region "PARAMETROS - CODIGO COMANDA"
-
-                        'Dim strCodComandaDHMS As String = Format(Now, "ddhhmmss")
-                        Dim strCodComandaDHMS As String = String.Empty
-
-                        If Parametros.strPrefixoComanda = "Nenhum" Then
-                            Parametros.strPrefixoComanda = ""
-                        End If
-
-                        If Parametros.strModoAuto = "Dia - Hora - Min - Seg" Then
-                            strCodComandaDHMS = Format(Now, "ddHHmmss")
-                        End If
-
-                        If Parametros.strModoAuto = "Sequencial" Then
-                            If ComandaAtivaCodigo = String.Empty Then
-                                strCodComandaDHMS = SQLControl.GetCodigoUltimaComanda_Config("frmPdvVenda - Tratar_Peso")
-
-                                If strCodComandaDHMS = "0" Or strCodComandaDHMS = "" Or strCodComandaDHMS = String.Empty Then
-                                    strCodComandaDHMS = "1"
-                                End If
-                            End If
-                        End If
-
-                        If ComandaAtivaCodigo <> String.Empty Then
-                            strCodComandaDHMS = ComandaAtivaCodigo
-                        End If
-#End Region
-
-
-                        Dim dValor As Decimal = Produto.Preco_Produto
-                        Dim dQtd As Decimal = CType(strDadosPortaSerial_Peso, Decimal) / 1000
-                        Dim dResultado As Decimal = dQtd * dValor
-
-                        Display(
-                        dQtd.ToString("#,###0.000"),
-                        dResultado.ToString("#,##0.00"))
-
-                        Dim strdQtd_IMP As String = "(" + dQtd.ToString("#,###0.000") + "Kg)"
-                        Dim strdResultado_IMP As String = "R$ " + dResultado.ToString("#,##0.00")
-
-                        If SQLControl.InserirComanda(
+                            If SQLControl.InserirComandaPostgres(
                                                      Produto.Codigo,
                                                      Parametros.strCodEmpresa,
                                                      Parametros.strCodDeposito,
@@ -1986,7 +1906,7 @@ Public Class frmPdvVenda
                                                      ) = True Then
 
 
-                            SQLControl.InserirComanda_s(Produto.Codigo,
+                                SQLControl.InserirComanda_sPostgres(Produto.Codigo,
                                                         Parametros.strCodEmpresa,
                                                         Parametros.strCodDeposito,
                                                         Parametros.strCodVendedor,
@@ -1997,7 +1917,7 @@ Public Class frmPdvVenda
                                                         "32"
                                                         )
 
-                            Impressao.Imprimir(
+                                Impressao.Imprimir(
                                                Parametros.strPrefixoComanda + strCodComandaDHMS,
                                                Produto.Nome,
                                                strdQtd_IMP,
@@ -2006,21 +1926,1793 @@ Public Class frmPdvVenda
                                                Parametros.strImpQRCod,
                                                Parametros.strImpLogo, False
                                                )
-                        Else
-                            Application.Restart()
+                            Else
+                                Application.Restart()
+                            End If
+
+                            If imgAtual <> "imgRetire" Then
+                                picEstado.Image = imgRetire
+                                imgAtual = "imgRetire"
+                            End If
+
+                            DisplayLabel_Limpar()
+                            If Parametros.strVoltarPadrao = "SIM" Then
+                                wait(3000)
+                                SQLControl.ConsultarProdutoPostgres(Parametros.strCodProduto, Produto, "frmPdvVenda - Tratar_Peso")
+                                DisplayLabelNomeProduto(Produto.Codigo + " - " + Produto.Nome + " (R$ " + CType(Produto.Preco_Produto, Decimal).ToString("#,##0.00") + ")")
+                            End If
                         End If
-                        If imgAtual <> "imgRetire" Then
-                            picEstado.Image = imgRetire
-                            imgAtual = "imgRetire"
-                        End If
-                        DisplayLabel_Limpar()
-                        If Parametros.strVoltarPadrao = "SIM" Then
-                            wait(3000)
-                            SQLControl.ConsultarProduto(Parametros.strCodProduto, Produto, "frmPdvVenda - Tratar_Peso")
+                        Exit Sub
+                    End If
+
+                    'F2
+                    If lblNomeProduto.Text.Contains("MARMITEX") Then
+                        If CType(strDadosPortaSerial_Peso, Decimal) >= "00001" And
+                       CType(strDadosPortaSerial_Peso, Decimal) <= "00538" Then
+
+#Region "PARAMETROS - CODIGO COMANDA"
+
+                            'Dim strCodComandaDHMS As String = Format(Now, "ddhhmmss")
+                            Dim strCodComandaDHMS As String = String.Empty
+
+                            If Parametros.strPrefixoComanda = "Nenhum" Then
+                                Parametros.strPrefixoComanda = ""
+                            End If
+
+                            If Parametros.strModoAuto = "Dia - Hora - Min - Seg" Then
+                                strCodComandaDHMS = Format(Now, "ddHHmmss")
+                            End If
+
+                            If Parametros.strModoAuto = "Sequencial" Then
+                                If ComandaAtivaCodigo = String.Empty Then
+                                    strCodComandaDHMS = SQLControl.GetCodigoUltimaComanda_ConfigPostgres("frmPdvVenda - Tratar_Peso")
+
+                                    If strCodComandaDHMS = "0" Or strCodComandaDHMS = "" Or strCodComandaDHMS = String.Empty Then
+                                        strCodComandaDHMS = "1"
+                                    End If
+                                End If
+                            End If
+
+                            If ComandaAtivaCodigo <> String.Empty Then
+                                strCodComandaDHMS = ComandaAtivaCodigo
+                            End If
+#End Region
+
+                            SQLControl.ConsultarProdutoPostgres(Parametros.CodMarmitex1, Produto, "frmPdvVenda - Tratar")
                             DisplayLabelNomeProduto(Produto.Codigo + " - " + Produto.Nome + " (R$ " + CType(Produto.Preco_Produto, Decimal).ToString("#,##0.00") + ")")
+
+                            Dim dValor As Decimal = Produto.Preco_Produto
+                            Dim dQtd As Decimal = CType(strDadosPortaSerial_Peso, Decimal) / 1000
+                            Dim dResultado As Decimal = dQtd * dValor
+
+                            Display(
+                            dQtd.ToString("#,###0.000"),
+                            dResultado.ToString("#,##0.00"))
+
+                            Dim strdQtd_IMP As String = "(" + dQtd.ToString("#,###0.000") + "Kg)"
+                            Dim strdResultado_IMP As String = "R$ " + dResultado.ToString("#,##0.00")
+
+                            If SQLControl.InserirComandaPostgres(
+                                                     Produto.Codigo,
+                                                     Parametros.strCodEmpresa,
+                                                     Parametros.strCodDeposito,
+                                                     Parametros.strCodVendedor,
+                                                     dQtd,
+                                                     Produto.Preco_Produto,
+                                                     dResultado,
+                                                     Parametros.strPrefixoComanda + strCodComandaDHMS,
+                                                     "32"
+                                                     ) = True Then
+
+
+                                SQLControl.InserirComanda_sPostgres(Produto.Codigo,
+                                                        Parametros.strCodEmpresa,
+                                                        Parametros.strCodDeposito,
+                                                        Parametros.strCodVendedor,
+                                                        dQtd,
+                                                        Produto.Preco_Produto,
+                                                        dResultado,
+                                                        Parametros.strPrefixoComanda + strCodComandaDHMS,
+                                                        "32"
+                                                        )
+
+                                Impressao.Imprimir(
+                                               Parametros.strPrefixoComanda + strCodComandaDHMS,
+                                               Produto.Nome,
+                                               strdQtd_IMP,
+                                               strdResultado_IMP,
+                                               Parametros.strImpCodBarr,
+                                               Parametros.strImpQRCod,
+                                               Parametros.strImpLogo, False
+                                               )
+                            Else
+                                Application.Restart()
+                            End If
+
+                            If imgAtual <> "imgRetire" Then
+                                picEstado.Image = imgRetire
+                                imgAtual = "imgRetire"
+                            End If
+                            DisplayLabel_Limpar()
+                            If Parametros.strVoltarPadrao = "SIM" Then
+                                wait(3000)
+                                SQLControl.ConsultarProdutoPostgres(Parametros.strCodProduto, Produto, "frmPdvVenda - Tratar_Peso")
+                                DisplayLabelNomeProduto(Produto.Codigo + " - " + Produto.Nome + " (R$ " + CType(Produto.Preco_Produto, Decimal).ToString("#,##0.00") + ")")
+                            End If
+                        End If
+
+
+                        If CType(strDadosPortaSerial_Peso, Decimal) >= "00539" And
+                            CType(strDadosPortaSerial_Peso, Decimal) <= "00750" Then
+
+#Region "PARAMETROS - CODIGO COMANDA"
+
+                            'Dim strCodComandaDHMS As String = Format(Now, "ddhhmmss")
+                            Dim strCodComandaDHMS As String = String.Empty
+
+                            If Parametros.strPrefixoComanda = "Nenhum" Then
+                                Parametros.strPrefixoComanda = ""
+                            End If
+
+                            If Parametros.strModoAuto = "Dia - Hora - Min - Seg" Then
+                                strCodComandaDHMS = Format(Now, "ddHHmmss")
+                            End If
+
+                            If Parametros.strModoAuto = "Sequencial" Then
+                                If ComandaAtivaCodigo = String.Empty Then
+                                    strCodComandaDHMS = SQLControl.GetCodigoUltimaComanda_ConfigPostgres("frmPdvVenda - Tratar_Peso")
+
+                                    If strCodComandaDHMS = "0" Or strCodComandaDHMS = "" Or strCodComandaDHMS = String.Empty Then
+                                        strCodComandaDHMS = "1"
+                                    End If
+                                End If
+                            End If
+
+                            If ComandaAtivaCodigo <> String.Empty Then
+                                strCodComandaDHMS = ComandaAtivaCodigo
+                            End If
+
+#End Region
+
+                            SQLControl.ConsultarProdutoPostgres(Parametros.CodMarmitex2, Produto, "frmPdvVenda - Tratar_Peso")
+                            DisplayLabelNomeProduto(Produto.Codigo + " - " + Produto.Nome + " (R$ " + CType(Produto.Preco_Produto, Decimal).ToString("#,##0.00") + ")")
+
+                            Dim dValor As Decimal = Produto.Preco_Produto
+                            Dim dQtd As Decimal = CType(strDadosPortaSerial_Peso, Decimal) / 1000
+                            Dim dQtd_UN As Decimal = 1
+                            Dim dResultado As Decimal = dQtd * dValor
+                            Dim dResultado_UN As Decimal = dQtd_UN * dValor
+
+                            Display(
+                            dQtd.ToString("#,###0.000"),
+                            dResultado_UN.ToString("#,##0.00"))
+
+                            Dim strdQtd_IMP As String = "(" + dQtd.ToString("#,###0.000") + "Kg)"
+                            Dim strdResultado_IMP As String = "R$ " + dResultado_UN.ToString("#,##0.00")
+
+                            If SQLControl.InserirComandaPostgres(
+                                                     Produto.Codigo,
+                                                     Parametros.strCodEmpresa,
+                                                     Parametros.strCodDeposito,
+                                                     Parametros.strCodVendedor,
+                                                     dQtd_UN,
+                                                     Produto.Preco_Produto,
+                                                     dResultado_UN,
+                                                     Parametros.strPrefixoComanda + strCodComandaDHMS,
+                                                     "32"
+                                                    ) = True Then
+
+                                SQLControl.InserirComanda_sPostgres(Produto.Codigo,
+                                                        Parametros.strCodEmpresa,
+                                                        Parametros.strCodDeposito,
+                                                        Parametros.strCodVendedor,
+                                                        dQtd,
+                                                        Produto.Preco_Produto,
+                                                        dResultado,
+                                                        Parametros.strPrefixoComanda + strCodComandaDHMS,
+                                                        "32"
+                                                        )
+
+                                Impressao.Imprimir(
+                                               Parametros.strPrefixoComanda + strCodComandaDHMS,
+                                               Produto.Nome,
+                                               strdQtd_IMP,
+                                               strdResultado_IMP,
+                                               Parametros.strImpCodBarr,
+                                               Parametros.strImpQRCod,
+                                               Parametros.strImpLogo, False
+                                              )
+
+                            Else
+                                Application.Restart()
+                            End If
+                            DisplayLabel_Limpar()
+                            picEstado.Image = imgRetire
+                            If Parametros.strVoltarPadrao = "SIM" Then
+                                wait(3000)
+                                SQLControl.ConsultarProdutoPostgres(Parametros.strCodProduto, Produto, "frmPdvVenda - Tratar_Peso")
+                                DisplayLabelNomeProduto(Produto.Codigo + " - " + Produto.Nome + " (R$ " + CType(Produto.Preco_Produto, Decimal).ToString("#,##0.00") + ")")
+                            End If
+                            Exit Sub
+
+                        End If
+
+
+                        If CType(strDadosPortaSerial_Peso, Decimal) >= "00751" Then
+
+#Region "PARAMETROS - CODIGO COMANDA"
+
+                            'Dim strCodComandaDHMS As String = Format(Now, "ddhhmmss")
+                            Dim strCodComandaDHMS As String = String.Empty
+
+                            If Parametros.strPrefixoComanda = "Nenhum" Then
+                                Parametros.strPrefixoComanda = ""
+                            End If
+
+                            If Parametros.strModoAuto = "Dia - Hora - Min - Seg" Then
+                                strCodComandaDHMS = Format(Now, "ddHHmmss")
+                            End If
+
+                            If Parametros.strModoAuto = "Sequencial" Then
+                                If ComandaAtivaCodigo = String.Empty Then
+                                    strCodComandaDHMS = SQLControl.GetCodigoUltimaComanda_ConfigPostgres("frmPdvVenda - Tratar_Peso")
+
+                                    If strCodComandaDHMS = "0" Or strCodComandaDHMS = "" Or strCodComandaDHMS = String.Empty Then
+                                        strCodComandaDHMS = "1"
+                                    End If
+                                End If
+                            End If
+
+                            If ComandaAtivaCodigo <> String.Empty Then
+                                strCodComandaDHMS = ComandaAtivaCodigo
+                            End If
+
+#End Region
+                            'Parametros.strCodProduto2
+                            SQLControl.ConsultarProdutoPostgres(Parametros.CodMarmitex3, Produto, "frmPdvVenda - Tratar_Peso")
+                            DisplayLabelNomeProduto(Produto.Codigo + " - " + Produto.Nome + " (R$ " + CType(Produto.Preco_Produto, Decimal).ToString("#,##0.00") + ")")
+
+                            Dim dValor As Decimal = Produto.Preco_Produto
+                            Dim dQtd As Decimal = CType(strDadosPortaSerial_Peso, Decimal) / 1000
+                            Dim dQtd_UN As Decimal = 1
+                            Dim dResultado As Decimal = dQtd * dValor
+                            Dim dResultado_UN As Decimal = dQtd_UN * dValor
+
+                            Display(
+                            dQtd.ToString("#,###0.000"),
+                            dResultado_UN.ToString("#,##0.00"))
+
+                            Dim strdQtd_IMP As String = "(" + dQtd.ToString("#,###0.000") + "Kg)"
+                            Dim strdResultado_IMP As String = "R$ " + dResultado_UN.ToString("#,##0.00")
+
+                            If SQLControl.InserirComandaPostgres(
+                                                     Produto.Codigo,
+                                                     Parametros.strCodEmpresa,
+                                                     Parametros.strCodDeposito,
+                                                     Parametros.strCodVendedor,
+                                                     dQtd_UN,
+                                                     Produto.Preco_Produto,
+                                                     dResultado_UN,
+                                                     Parametros.strPrefixoComanda + strCodComandaDHMS,
+                                                     "32"
+                                                    ) = True Then
+
+                                SQLControl.InserirComanda_sPostgres(Produto.Codigo,
+                                                        Parametros.strCodEmpresa,
+                                                        Parametros.strCodDeposito,
+                                                        Parametros.strCodVendedor,
+                                                        dQtd,
+                                                        Produto.Preco_Produto,
+                                                        dResultado,
+                                                        Parametros.strPrefixoComanda + strCodComandaDHMS,
+                                                        "32"
+                                                        )
+
+                                Impressao.Imprimir(
+                                               Parametros.strPrefixoComanda + strCodComandaDHMS,
+                                               Produto.Nome,
+                                               strdQtd_IMP,
+                                               strdResultado_IMP,
+                                               Parametros.strImpCodBarr,
+                                               Parametros.strImpQRCod,
+                                               Parametros.strImpLogo, False
+                                              )
+
+                            Else
+                                Application.Restart()
+                            End If
+                            DisplayLabel_Limpar()
+
+                            If imgAtual <> "imgRetire" Then
+                                picEstado.Image = imgRetire
+                                imgAtual = "imgRetire"
+                            End If
+                            If Parametros.strVoltarPadrao = "SIM" Then
+                                wait(3000)
+                                SQLControl.ConsultarProdutoPostgres(Parametros.strCodProduto, Produto, "frmPdvVenda - Tratar_Peso")
+                                DisplayLabelNomeProduto(Produto.Codigo + " - " + Produto.Nome + " (R$ " + CType(Produto.Preco_Produto, Decimal).ToString("#,##0.00") + ")")
+                            End If
+                            Exit Sub
+
+                        End If
+                        Exit Sub
+                    End If
+
+                    'F1
+                    If lblNomeProduto.Text.Contains("SELF") Then
+
+                        If CType(strDadosPortaSerial_Peso, Decimal) >= "00001" And
+                           CType(strDadosPortaSerial_Peso, Decimal) <= "00538" Then
+
+#Region "PARAMETROS - CODIGO COMANDA"
+
+                            'Dim strCodComandaDHMS As String = Format(Now, "ddhhmmss")
+                            Dim strCodComandaDHMS As String = String.Empty
+
+                            If Parametros.strPrefixoComanda = "Nenhum" Then
+                                Parametros.strPrefixoComanda = ""
+                            End If
+
+                            If Parametros.strModoAuto = "Dia - Hora - Min - Seg" Then
+                                strCodComandaDHMS = Format(Now, "ddHHmmss")
+                            End If
+
+                            If Parametros.strModoAuto = "Sequencial" Then
+                                If ComandaAtivaCodigo = String.Empty Then
+                                    strCodComandaDHMS = SQLControl.GetCodigoUltimaComanda_ConfigPostgres("frmPdvVenda - Tratar_Peso")
+
+                                    If strCodComandaDHMS = "0" Or strCodComandaDHMS = "" Or strCodComandaDHMS = String.Empty Then
+                                        strCodComandaDHMS = "1"
+                                    End If
+                                End If
+                            End If
+
+                            If ComandaAtivaCodigo <> String.Empty Then
+                                strCodComandaDHMS = ComandaAtivaCodigo
+                            End If
+#End Region
+
+                            SQLControl.ConsultarProdutoPostgres(Parametros.CodSelf1, Produto, "frmPdvVenda - Tratar")
+                            DisplayLabelNomeProduto(Produto.Codigo + " - " + Produto.Nome + " (R$ " + CType(Produto.Preco_Produto, Decimal).ToString("#,##0.00") + ")")
+
+                            Dim dValor As Decimal = Produto.Preco_Produto
+                            Dim dQtd As Decimal = CType(strDadosPortaSerial_Peso, Decimal) / 1000
+                            Dim dResultado As Decimal = dQtd * dValor
+
+                            Display(
+                            dQtd.ToString("#,###0.000"),
+                            dResultado.ToString("#,##0.00"))
+
+                            Dim strdQtd_IMP As String = "(" + dQtd.ToString("#,###0.000") + "Kg)"
+                            Dim strdResultado_IMP As String = "R$ " + dResultado.ToString("#,##0.00")
+
+                            If SQLControl.InserirComandaPostgres(
+                                                     Produto.Codigo,
+                                                     Parametros.strCodEmpresa,
+                                                     Parametros.strCodDeposito,
+                                                     Parametros.strCodVendedor,
+                                                     dQtd,
+                                                     Produto.Preco_Produto,
+                                                     dResultado,
+                                                     Parametros.strPrefixoComanda + strCodComandaDHMS,
+                                                     "1"
+                                                     ) = True Then
+
+
+                                SQLControl.InserirComanda_sPostgres(Produto.Codigo,
+                                                        Parametros.strCodEmpresa,
+                                                        Parametros.strCodDeposito,
+                                                        Parametros.strCodVendedor,
+                                                        dQtd,
+                                                        Produto.Preco_Produto,
+                                                        dResultado,
+                                                        Parametros.strPrefixoComanda + strCodComandaDHMS,
+                                                        "1"
+                                                        )
+
+                                Impressao.Imprimir(
+                                               Parametros.strPrefixoComanda + strCodComandaDHMS,
+                                               Produto.Nome,
+                                               strdQtd_IMP,
+                                               strdResultado_IMP,
+                                               Parametros.strImpCodBarr,
+                                               Parametros.strImpQRCod,
+                                               Parametros.strImpLogo, False
+                                               )
+                            Else
+                                Application.Restart()
+                            End If
+
+                            If imgAtual <> "imgRetire" Then
+                                picEstado.Image = imgRetire
+                                imgAtual = "imgRetire"
+                            End If
+                            DisplayLabel_Limpar()
+                            If Parametros.strVoltarPadrao = "SIM" Then
+                                wait(3000)
+                                SQLControl.ConsultarProdutoPostgres(Parametros.strCodProduto, Produto, "frmPdvVenda - Tratar_Peso")
+                                DisplayLabelNomeProduto(Produto.Codigo + " - " + Produto.Nome + " (R$ " + CType(Produto.Preco_Produto, Decimal).ToString("#,##0.00") + ")")
+                            End If
+                        End If
+
+
+                        If CType(strDadosPortaSerial_Peso, Decimal) >= "00539" And
+                           CType(strDadosPortaSerial_Peso, Decimal) <= "00750" Then
+
+#Region "PARAMETROS - CODIGO COMANDA"
+
+                            'Dim strCodComandaDHMS As String = Format(Now, "ddhhmmss")
+                            Dim strCodComandaDHMS As String = String.Empty
+
+                            If Parametros.strPrefixoComanda = "Nenhum" Then
+                                Parametros.strPrefixoComanda = ""
+                            End If
+
+                            If Parametros.strModoAuto = "Dia - Hora - Min - Seg" Then
+                                strCodComandaDHMS = Format(Now, "ddHHmmss")
+                            End If
+
+                            If Parametros.strModoAuto = "Sequencial" Then
+                                If ComandaAtivaCodigo = String.Empty Then
+                                    strCodComandaDHMS = SQLControl.GetCodigoUltimaComanda_ConfigPostgres("frmPdvVenda - Tratar_Peso")
+
+                                    If strCodComandaDHMS = "0" Or strCodComandaDHMS = "" Or strCodComandaDHMS = String.Empty Then
+                                        strCodComandaDHMS = "1"
+                                    End If
+                                End If
+                            End If
+
+                            If ComandaAtivaCodigo <> String.Empty Then
+                                strCodComandaDHMS = ComandaAtivaCodigo
+                            End If
+
+#End Region
+
+                            SQLControl.ConsultarProdutoPostgres(Parametros.CodSelf2, Produto, "frmPdvVenda - Tratar_Peso")
+                            DisplayLabelNomeProduto(Produto.Codigo + " - " + Produto.Nome + " (R$ " + CType(Produto.Preco_Produto, Decimal).ToString("#,##0.00") + ")")
+
+                            Dim dValor As Decimal = Produto.Preco_Produto
+                            Dim dQtd As Decimal = CType(strDadosPortaSerial_Peso, Decimal) / 1000
+                            Dim dQtd_UN As Decimal = 1
+                            Dim dResultado As Decimal = dQtd * dValor
+                            Dim dResultado_UN As Decimal = dQtd_UN * dValor
+
+                            Display(
+                            dQtd.ToString("#,###0.000"),
+                            dResultado_UN.ToString("#,##0.00"))
+
+                            Dim strdQtd_IMP As String = "(" + dQtd.ToString("#,###0.000") + "Kg)"
+                            Dim strdResultado_IMP As String = "R$ " + dResultado_UN.ToString("#,##0.00")
+
+                            If SQLControl.InserirComandaPostgres(
+                                                     Produto.Codigo,
+                                                     Parametros.strCodEmpresa,
+                                                     Parametros.strCodDeposito,
+                                                     Parametros.strCodVendedor,
+                                                     dQtd_UN,
+                                                     Produto.Preco_Produto,
+                                                     dResultado_UN,
+                                                     Parametros.strPrefixoComanda + strCodComandaDHMS,
+                                                     "1"
+                                                    ) = True Then
+
+                                SQLControl.InserirComanda_sPostgres(Produto.Codigo,
+                                                        Parametros.strCodEmpresa,
+                                                        Parametros.strCodDeposito,
+                                                        Parametros.strCodVendedor,
+                                                        dQtd,
+                                                        Produto.Preco_Produto,
+                                                        dResultado,
+                                                        Parametros.strPrefixoComanda + strCodComandaDHMS,
+                                                        "1"
+                                                        )
+
+                                Impressao.Imprimir(
+                                               Parametros.strPrefixoComanda + strCodComandaDHMS,
+                                               Produto.Nome,
+                                               strdQtd_IMP,
+                                               strdResultado_IMP,
+                                               Parametros.strImpCodBarr,
+                                               Parametros.strImpQRCod,
+                                               Parametros.strImpLogo, False
+                                              )
+
+                            Else
+                                Application.Restart()
+                            End If
+                            DisplayLabel_Limpar()
+                            If imgAtual <> "imgRetire" Then
+                                picEstado.Image = imgRetire
+                                imgAtual = "imgRetire"
+                            End If
+                            If Parametros.strVoltarPadrao = "SIM" Then
+                                wait(3000)
+                                SQLControl.ConsultarProdutoPostgres(Parametros.strCodProduto, Produto, "frmPdvVenda - Tratar_Peso")
+                                DisplayLabelNomeProduto(Produto.Codigo + " - " + Produto.Nome + " (R$ " + CType(Produto.Preco_Produto, Decimal).ToString("#,##0.00") + ")")
+                            End If
+                            Exit Sub
+
+                        End If
+
+
+                        If CType(strDadosPortaSerial_Peso, Decimal) >= "00751" Then
+
+#Region "PARAMETROS - CODIGO COMANDA"
+
+                            'Dim strCodComandaDHMS As String = Format(Now, "ddhhmmss")
+                            Dim strCodComandaDHMS As String = String.Empty
+
+                            If Parametros.strPrefixoComanda = "Nenhum" Then
+                                Parametros.strPrefixoComanda = ""
+                            End If
+
+                            If Parametros.strModoAuto = "Dia - Hora - Min - Seg" Then
+                                strCodComandaDHMS = Format(Now, "ddHHmmss")
+                            End If
+
+                            If Parametros.strModoAuto = "Sequencial" Then
+                                If ComandaAtivaCodigo = String.Empty Then
+                                    strCodComandaDHMS = SQLControl.GetCodigoUltimaComanda_ConfigPostgres("frmPdvVenda - Tratar_Peso")
+
+                                    If strCodComandaDHMS = "0" Or strCodComandaDHMS = "" Or strCodComandaDHMS = String.Empty Then
+                                        strCodComandaDHMS = "1"
+                                    End If
+                                End If
+                            End If
+
+                            If ComandaAtivaCodigo <> String.Empty Then
+                                strCodComandaDHMS = ComandaAtivaCodigo
+                            End If
+
+#End Region
+                            'Parametros.strCodProduto2
+                            SQLControl.ConsultarProdutoPostgres(Parametros.CodSelf3, Produto, "frmPdvVenda - Tratar_Peso")
+                            DisplayLabelNomeProduto(Produto.Codigo + " - " + Produto.Nome + " (R$ " + CType(Produto.Preco_Produto, Decimal).ToString("#,##0.00") + ")")
+
+                            Dim dValor As Decimal = Produto.Preco_Produto
+                            Dim dQtd As Decimal = CType(strDadosPortaSerial_Peso, Decimal) / 1000
+                            Dim dQtd_UN As Decimal = 1
+                            Dim dResultado As Decimal = dQtd * dValor
+                            Dim dResultado_UN As Decimal = dQtd_UN * dValor
+
+                            Display(
+                            dQtd.ToString("#,###0.000"),
+                            dResultado_UN.ToString("#,##0.00"))
+
+                            Dim strdQtd_IMP As String = "(" + dQtd.ToString("#,###0.000") + "Kg)"
+                            Dim strdResultado_IMP As String = "R$ " + dResultado_UN.ToString("#,##0.00")
+
+                            If SQLControl.InserirComandaPostgres(
+                                                     Produto.Codigo,
+                                                     Parametros.strCodEmpresa,
+                                                     Parametros.strCodDeposito,
+                                                     Parametros.strCodVendedor,
+                                                     dQtd_UN,
+                                                     Produto.Preco_Produto,
+                                                     dResultado_UN,
+                                                     Parametros.strPrefixoComanda + strCodComandaDHMS,
+                                                     "1"
+                                                    ) = True Then
+
+                                SQLControl.InserirComanda_sPostgres(Produto.Codigo,
+                                                        Parametros.strCodEmpresa,
+                                                        Parametros.strCodDeposito,
+                                                        Parametros.strCodVendedor,
+                                                        dQtd,
+                                                        Produto.Preco_Produto,
+                                                        dResultado,
+                                                        Parametros.strPrefixoComanda + strCodComandaDHMS,
+                                                        "1"
+                                                        )
+
+                                Impressao.Imprimir(
+                                               Parametros.strPrefixoComanda + strCodComandaDHMS,
+                                               Produto.Nome,
+                                               strdQtd_IMP,
+                                               strdResultado_IMP,
+                                               Parametros.strImpCodBarr,
+                                               Parametros.strImpQRCod,
+                                               Parametros.strImpLogo, False
+                                              )
+
+                            Else
+                                Application.Restart()
+                            End If
+                            DisplayLabel_Limpar()
+                            If imgAtual <> "imgRetire" Then
+                                picEstado.Image = imgRetire
+                                imgAtual = "imgRetire"
+                            End If
+                            If Parametros.strVoltarPadrao = "SIM" Then
+                                wait(3000)
+                                SQLControl.ConsultarProdutoPostgres(Parametros.strCodProduto, Produto, "frmPdvVenda - Tratar_Peso")
+                                DisplayLabelNomeProduto(Produto.Codigo + " - " + Produto.Nome + " (R$ " + CType(Produto.Preco_Produto, Decimal).ToString("#,##0.00") + ")")
+                            End If
+                            Exit Sub
+
+                        End If
+
+                        Exit Sub
+                    End If
+
+                    'F4
+                    If lblNomeProduto.Text.Contains("MARMITX") Then
+                        If CType(strDadosPortaSerial_Peso, Decimal) <> "00000" Then
+
+#Region "PARAMETROS - CODIGO COMANDA"
+
+                            'Dim strCodComandaDHMS As String = Format(Now, "ddhhmmss")
+                            Dim strCodComandaDHMS As String = String.Empty
+
+                            If Parametros.strPrefixoComanda = "Nenhum" Then
+                                Parametros.strPrefixoComanda = ""
+                            End If
+
+                            If Parametros.strModoAuto = "Dia - Hora - Min - Seg" Then
+                                strCodComandaDHMS = Format(Now, "ddHHmmss")
+                            End If
+
+                            If Parametros.strModoAuto = "Sequencial" Then
+                                If ComandaAtivaCodigo = String.Empty Then
+                                    strCodComandaDHMS = SQLControl.GetCodigoUltimaComanda_ConfigPostgres("frmPdvVenda - Tratar_Peso")
+
+                                    If strCodComandaDHMS = "0" Or strCodComandaDHMS = "" Or strCodComandaDHMS = String.Empty Then
+                                        strCodComandaDHMS = "1"
+                                    End If
+                                End If
+                            End If
+
+                            If ComandaAtivaCodigo <> String.Empty Then
+                                strCodComandaDHMS = ComandaAtivaCodigo
+                            End If
+#End Region
+
+
+                            Dim dValor As Decimal = Produto.Preco_Produto
+                            Dim dQtd As Decimal = CType(strDadosPortaSerial_Peso, Decimal) / 1000
+                            Dim dResultado As Decimal = dQtd * dValor
+
+                            Display(
+                            dQtd.ToString("#,###0.000"),
+                            dResultado.ToString("#,##0.00"))
+
+                            Dim strdQtd_IMP As String = "(" + dQtd.ToString("#,###0.000") + "Kg)"
+                            Dim strdResultado_IMP As String = "R$ " + dResultado.ToString("#,##0.00")
+
+                            If SQLControl.InserirComandaPostgres(
+                                                         Produto.Codigo,
+                                                         Parametros.strCodEmpresa,
+                                                         Parametros.strCodDeposito,
+                                                         Parametros.strCodVendedor,
+                                                         dQtd,
+                                                         Produto.Preco_Produto,
+                                                         dResultado,
+                                                         Parametros.strPrefixoComanda + strCodComandaDHMS,
+                                                         "32"
+                                                         ) = True Then
+
+
+                                SQLControl.InserirComanda_sPostgres(Produto.Codigo,
+                                                            Parametros.strCodEmpresa,
+                                                            Parametros.strCodDeposito,
+                                                            Parametros.strCodVendedor,
+                                                            dQtd,
+                                                            Produto.Preco_Produto,
+                                                            dResultado,
+                                                            Parametros.strPrefixoComanda + strCodComandaDHMS,
+                                                            "32"
+                                                            )
+
+                                Impressao.Imprimir(
+                                                   Parametros.strPrefixoComanda + strCodComandaDHMS,
+                                                   Produto.Nome,
+                                                   strdQtd_IMP,
+                                                   strdResultado_IMP,
+                                                   Parametros.strImpCodBarr,
+                                                   Parametros.strImpQRCod,
+                                                   Parametros.strImpLogo, False
+                                                   )
+                            Else
+                                Application.Restart()
+                            End If
+                            If imgAtual <> "imgRetire" Then
+                                picEstado.Image = imgRetire
+                                imgAtual = "imgRetire"
+                            End If
+                            DisplayLabel_Limpar()
+                            If Parametros.strVoltarPadrao = "SIM" Then
+                                wait(3000)
+                                SQLControl.ConsultarProdutoPostgres(Parametros.strCodProduto, Produto, "frmPdvVenda - Tratar_Peso")
+                                DisplayLabelNomeProduto(Produto.Codigo + " - " + Produto.Nome + " (R$ " + CType(Produto.Preco_Produto, Decimal).ToString("#,##0.00") + ")")
+                            End If
                         End If
                     End If
+
                 End If
+
+
+                If Parametros.strSistemaIntegrado = "Sismoura" Then
+
+                    'F5
+                    If lblNomeProduto.Text.Contains("CONVENIO") Then
+
+                        If CType(strDadosPortaSerial_Peso, Decimal) >= "00001" And
+                           CType(strDadosPortaSerial_Peso, Decimal) <= "00538" Then
+
+#Region "PARAMETROS - CODIGO COMANDA"
+
+                            'Dim strCodComandaDHMS As String = Format(Now, "ddhhmmss")
+                            Dim strCodComandaDHMS As String = String.Empty
+
+                            If Parametros.strPrefixoComanda = "Nenhum" Then
+                                Parametros.strPrefixoComanda = ""
+                            End If
+
+                            If Parametros.strModoAuto = "Dia - Hora - Min - Seg" Then
+                                strCodComandaDHMS = Format(Now, "ddHHmmss")
+                            End If
+
+                            If Parametros.strModoAuto = "Sequencial" Then
+                                If ComandaAtivaCodigo = String.Empty Then
+                                    strCodComandaDHMS = SQLControl.GetCodigoUltimaComanda_Config("frmPdvVenda - Tratar_Peso")
+
+                                    If strCodComandaDHMS = "0" Or strCodComandaDHMS = "" Or strCodComandaDHMS = String.Empty Then
+                                        strCodComandaDHMS = "1"
+                                    End If
+                                End If
+                            End If
+
+                            If ComandaAtivaCodigo <> String.Empty Then
+                                strCodComandaDHMS = ComandaAtivaCodigo
+                            End If
+#End Region
+
+                            SQLControl.ConsultarProduto(Parametros.CodSelf4, Produto, "frmPdvVenda - Tratar")
+                            DisplayLabelNomeProduto(Produto.Codigo + " - " + Produto.Nome + " (R$ " + CType(Produto.Preco_Produto, Decimal).ToString("#,##0.00") + ")")
+
+                            Dim dValor As Decimal = Produto.Preco_Produto
+                            Dim dQtd As Decimal = CType(strDadosPortaSerial_Peso, Decimal) / 1000
+                            Dim dResultado As Decimal = dQtd * dValor
+
+                            Display(
+                            dQtd.ToString("#,###0.000"),
+                            dResultado.ToString("#,##0.00"))
+
+                            Dim strdQtd_IMP As String = "(" + dQtd.ToString("#,###0.000") + "Kg)"
+                            Dim strdResultado_IMP As String = "R$ " + dResultado.ToString("#,##0.00")
+
+                            If SQLControl.InserirComanda(
+                                                     Produto.Codigo,
+                                                     Parametros.strCodEmpresa,
+                                                     Parametros.strCodDeposito,
+                                                     Parametros.strCodVendedor,
+                                                     dQtd,
+                                                     Produto.Preco_Produto,
+                                                     dResultado,
+                                                     Parametros.strPrefixoComanda + strCodComandaDHMS,
+                                                     "1"
+                                                     ) = True Then
+
+
+                                SQLControl.InserirComanda_s(Produto.Codigo,
+                                                        Parametros.strCodEmpresa,
+                                                        Parametros.strCodDeposito,
+                                                        Parametros.strCodVendedor,
+                                                        dQtd,
+                                                        Produto.Preco_Produto,
+                                                        dResultado,
+                                                        Parametros.strPrefixoComanda + strCodComandaDHMS,
+                                                        "1"
+                                                        )
+
+                                Impressao.Imprimir(
+                                               Parametros.strPrefixoComanda + strCodComandaDHMS,
+                                               Produto.Nome,
+                                               strdQtd_IMP,
+                                               strdResultado_IMP,
+                                               Parametros.strImpCodBarr,
+                                               Parametros.strImpQRCod,
+                                               Parametros.strImpLogo, False
+                                               )
+                            Else
+                                Application.Restart()
+                            End If
+
+                            If imgAtual <> "imgRetire" Then
+                                picEstado.Image = imgRetire
+                                imgAtual = "imgRetire"
+                            End If
+                            DisplayLabel_Limpar()
+                            If Parametros.strVoltarPadrao = "SIM" Then
+                                wait(3000)
+                                SQLControl.ConsultarProduto(Parametros.strCodProduto, Produto, "frmPdvVenda - Tratar_Peso")
+                                DisplayLabelNomeProduto(Produto.Codigo + " - " + Produto.Nome + " (R$ " + CType(Produto.Preco_Produto, Decimal).ToString("#,##0.00") + ")")
+                            End If
+                        End If
+
+
+                        If CType(strDadosPortaSerial_Peso, Decimal) >= "00539" And
+                           CType(strDadosPortaSerial_Peso, Decimal) <= "00750" Then
+
+#Region "PARAMETROS - CODIGO COMANDA"
+
+                            'Dim strCodComandaDHMS As String = Format(Now, "ddhhmmss")
+                            Dim strCodComandaDHMS As String = String.Empty
+
+                            If Parametros.strPrefixoComanda = "Nenhum" Then
+                                Parametros.strPrefixoComanda = ""
+                            End If
+
+                            If Parametros.strModoAuto = "Dia - Hora - Min - Seg" Then
+                                strCodComandaDHMS = Format(Now, "ddHHmmss")
+                            End If
+
+                            If Parametros.strModoAuto = "Sequencial" Then
+                                If ComandaAtivaCodigo = String.Empty Then
+                                    strCodComandaDHMS = SQLControl.GetCodigoUltimaComanda_Config("frmPdvVenda - Tratar_Peso")
+
+                                    If strCodComandaDHMS = "0" Or strCodComandaDHMS = "" Or strCodComandaDHMS = String.Empty Then
+                                        strCodComandaDHMS = "1"
+                                    End If
+                                End If
+                            End If
+
+                            If ComandaAtivaCodigo <> String.Empty Then
+                                strCodComandaDHMS = ComandaAtivaCodigo
+                            End If
+
+#End Region
+
+                            SQLControl.ConsultarProduto(Parametros.CodSelf5, Produto, "frmPdvVenda - Tratar_Peso")
+                            DisplayLabelNomeProduto(Produto.Codigo + " - " + Produto.Nome + " (R$ " + CType(Produto.Preco_Produto, Decimal).ToString("#,##0.00") + ")")
+
+                            Dim dValor As Decimal = Produto.Preco_Produto
+                            Dim dQtd As Decimal = CType(strDadosPortaSerial_Peso, Decimal) / 1000
+                            Dim dQtd_UN As Decimal = 1
+                            Dim dResultado As Decimal = dQtd * dValor
+                            Dim dResultado_UN As Decimal = dQtd_UN * dValor
+
+                            Display(
+                            dQtd.ToString("#,###0.000"),
+                            dResultado_UN.ToString("#,##0.00"))
+
+                            Dim strdQtd_IMP As String = "(" + dQtd.ToString("#,###0.000") + "Kg)"
+                            Dim strdResultado_IMP As String = "R$ " + dResultado_UN.ToString("#,##0.00")
+
+                            If SQLControl.InserirComanda(
+                                                     Produto.Codigo,
+                                                     Parametros.strCodEmpresa,
+                                                     Parametros.strCodDeposito,
+                                                     Parametros.strCodVendedor,
+                                                     dQtd_UN,
+                                                     Produto.Preco_Produto,
+                                                     dResultado_UN,
+                                                     Parametros.strPrefixoComanda + strCodComandaDHMS,
+                                                     "1"
+                                                    ) = True Then
+
+                                SQLControl.InserirComanda_s(Produto.Codigo,
+                                                        Parametros.strCodEmpresa,
+                                                        Parametros.strCodDeposito,
+                                                        Parametros.strCodVendedor,
+                                                        dQtd,
+                                                        Produto.Preco_Produto,
+                                                        dResultado,
+                                                        Parametros.strPrefixoComanda + strCodComandaDHMS,
+                                                        "1"
+                                                        )
+
+                                Impressao.Imprimir(
+                                               Parametros.strPrefixoComanda + strCodComandaDHMS,
+                                               Produto.Nome,
+                                               strdQtd_IMP,
+                                               strdResultado_IMP,
+                                               Parametros.strImpCodBarr,
+                                               Parametros.strImpQRCod,
+                                               Parametros.strImpLogo, False
+                                              )
+
+                            Else
+                                Application.Restart()
+                            End If
+                            DisplayLabel_Limpar()
+                            If imgAtual <> "imgRetire" Then
+                                picEstado.Image = imgRetire
+                                imgAtual = "imgRetire"
+                            End If
+                            If Parametros.strVoltarPadrao = "SIM" Then
+                                wait(3000)
+                                SQLControl.ConsultarProduto(Parametros.strCodProduto, Produto, "frmPdvVenda - Tratar_Peso")
+                                DisplayLabelNomeProduto(Produto.Codigo + " - " + Produto.Nome + " (R$ " + CType(Produto.Preco_Produto, Decimal).ToString("#,##0.00") + ")")
+                            End If
+                            Exit Sub
+
+                        End If
+
+
+                        If CType(strDadosPortaSerial_Peso, Decimal) >= "00751" Then
+
+#Region "PARAMETROS - CODIGO COMANDA"
+
+                            'Dim strCodComandaDHMS As String = Format(Now, "ddhhmmss")
+                            Dim strCodComandaDHMS As String = String.Empty
+
+                            If Parametros.strPrefixoComanda = "Nenhum" Then
+                                Parametros.strPrefixoComanda = ""
+                            End If
+
+                            If Parametros.strModoAuto = "Dia - Hora - Min - Seg" Then
+                                strCodComandaDHMS = Format(Now, "ddHHmmss")
+                            End If
+
+                            If Parametros.strModoAuto = "Sequencial" Then
+                                If ComandaAtivaCodigo = String.Empty Then
+                                    strCodComandaDHMS = SQLControl.GetCodigoUltimaComanda_Config("frmPdvVenda - Tratar_Peso")
+
+                                    If strCodComandaDHMS = "0" Or strCodComandaDHMS = "" Or strCodComandaDHMS = String.Empty Then
+                                        strCodComandaDHMS = "1"
+                                    End If
+                                End If
+                            End If
+
+                            If ComandaAtivaCodigo <> String.Empty Then
+                                strCodComandaDHMS = ComandaAtivaCodigo
+                            End If
+
+#End Region
+                            'Parametros.strCodProduto2
+                            SQLControl.ConsultarProduto(Parametros.CodSelf6, Produto, "frmPdvVenda - Tratar_Peso")
+                            DisplayLabelNomeProduto(Produto.Codigo + " - " + Produto.Nome + " (R$ " + CType(Produto.Preco_Produto, Decimal).ToString("#,##0.00") + ")")
+
+                            Dim dValor As Decimal = Produto.Preco_Produto
+                            Dim dQtd As Decimal = CType(strDadosPortaSerial_Peso, Decimal) / 1000
+                            Dim dQtd_UN As Decimal = 1
+                            Dim dResultado As Decimal = dQtd * dValor
+                            Dim dResultado_UN As Decimal = dQtd_UN * dValor
+
+                            Display(
+                            dQtd.ToString("#,###0.000"),
+                            dResultado_UN.ToString("#,##0.00"))
+
+                            Dim strdQtd_IMP As String = "(" + dQtd.ToString("#,###0.000") + "Kg)"
+                            Dim strdResultado_IMP As String = "R$ " + dResultado_UN.ToString("#,##0.00")
+
+                            If SQLControl.InserirComanda(
+                                                     Produto.Codigo,
+                                                     Parametros.strCodEmpresa,
+                                                     Parametros.strCodDeposito,
+                                                     Parametros.strCodVendedor,
+                                                     dQtd_UN,
+                                                     Produto.Preco_Produto,
+                                                     dResultado_UN,
+                                                     Parametros.strPrefixoComanda + strCodComandaDHMS,
+                                                     "1"
+                                                    ) = True Then
+
+                                SQLControl.InserirComanda_s(Produto.Codigo,
+                                                        Parametros.strCodEmpresa,
+                                                        Parametros.strCodDeposito,
+                                                        Parametros.strCodVendedor,
+                                                        dQtd,
+                                                        Produto.Preco_Produto,
+                                                        dResultado,
+                                                        Parametros.strPrefixoComanda + strCodComandaDHMS,
+                                                        "1"
+                                                        )
+
+                                Impressao.Imprimir(
+                                               Parametros.strPrefixoComanda + strCodComandaDHMS,
+                                               Produto.Nome,
+                                               strdQtd_IMP,
+                                               strdResultado_IMP,
+                                               Parametros.strImpCodBarr,
+                                               Parametros.strImpQRCod,
+                                               Parametros.strImpLogo, False
+                                              )
+
+                            Else
+                                Application.Restart()
+                            End If
+                            DisplayLabel_Limpar()
+                            If imgAtual <> "imgRetire" Then
+                                picEstado.Image = imgRetire
+                                imgAtual = "imgRetire"
+                            End If
+                            If Parametros.strVoltarPadrao = "SIM" Then
+                                wait(3000)
+                                SQLControl.ConsultarProduto(Parametros.strCodProduto, Produto, "frmPdvVenda - Tratar_Peso")
+                                DisplayLabelNomeProduto(Produto.Codigo + " - " + Produto.Nome + " (R$ " + CType(Produto.Preco_Produto, Decimal).ToString("#,##0.00") + ")")
+                            End If
+                            Exit Sub
+
+                        End If
+
+                        Exit Sub
+                    End If
+
+                    'F3
+                    If lblNomeProduto.Text.Contains("CHURRASCO") Then
+                        If CType(strDadosPortaSerial_Peso, Decimal) > "00000" Then
+
+#Region "PARAMETROS - CODIGO COMANDA"
+
+                            'Dim strCodComandaDHMS As String = Format(Now, "ddhhmmss")
+                            Dim strCodComandaDHMS As String = String.Empty
+
+                            If Parametros.strPrefixoComanda = "Nenhum" Then
+                                Parametros.strPrefixoComanda = ""
+                            End If
+
+                            If Parametros.strModoAuto = "Dia - Hora - Min - Seg" Then
+                                strCodComandaDHMS = Format(Now, "ddHHmmss")
+                            End If
+
+                            If Parametros.strModoAuto = "Sequencial" Then
+                                If ComandaAtivaCodigo = String.Empty Then
+                                    strCodComandaDHMS = SQLControl.GetCodigoUltimaComanda_Config("frmPdvVenda - Tratar_Peso")
+
+                                    If strCodComandaDHMS = "0" Or strCodComandaDHMS = "" Or strCodComandaDHMS = String.Empty Then
+                                        strCodComandaDHMS = "1"
+                                    End If
+                                End If
+                            End If
+
+                            If ComandaAtivaCodigo <> String.Empty Then
+                                strCodComandaDHMS = ComandaAtivaCodigo
+                            End If
+#End Region
+
+                            SQLControl.ConsultarProduto(Parametros.CodChurrasco1, Produto, "frmPdvVenda - Tratar")
+                            DisplayLabelNomeProduto(Produto.Codigo + " - " + Produto.Nome + " (R$ " + CType(Produto.Preco_Produto, Decimal).ToString("#,##0.00") + ")")
+
+                            Dim dValor As Decimal = Produto.Preco_Produto
+                            Dim dQtd As Decimal = CType(strDadosPortaSerial_Peso, Decimal) / 1000
+                            Dim dResultado As Decimal = dQtd * dValor
+
+                            Display(
+                            dQtd.ToString("#,###0.000"),
+                            dResultado.ToString("#,##0.00"))
+
+                            Dim strdQtd_IMP As String = "(" + dQtd.ToString("#,###0.000") + "Kg)"
+                            Dim strdResultado_IMP As String = "R$ " + dResultado.ToString("#,##0.00")
+
+                            If SQLControl.InserirComanda(
+                                                     Produto.Codigo,
+                                                     Parametros.strCodEmpresa,
+                                                     Parametros.strCodDeposito,
+                                                     Parametros.strCodVendedor,
+                                                     dQtd,
+                                                     Produto.Preco_Produto,
+                                                     dResultado,
+                                                     Parametros.strPrefixoComanda + strCodComandaDHMS,
+                                                     "32"
+                                                     ) = True Then
+
+
+                                SQLControl.InserirComanda_s(Produto.Codigo,
+                                                        Parametros.strCodEmpresa,
+                                                        Parametros.strCodDeposito,
+                                                        Parametros.strCodVendedor,
+                                                        dQtd,
+                                                        Produto.Preco_Produto,
+                                                        dResultado,
+                                                        Parametros.strPrefixoComanda + strCodComandaDHMS,
+                                                        "32"
+                                                        )
+
+                                Impressao.Imprimir(
+                                               Parametros.strPrefixoComanda + strCodComandaDHMS,
+                                               Produto.Nome,
+                                               strdQtd_IMP,
+                                               strdResultado_IMP,
+                                               Parametros.strImpCodBarr,
+                                               Parametros.strImpQRCod,
+                                               Parametros.strImpLogo, False
+                                               )
+                            Else
+                                Application.Restart()
+                            End If
+
+                            If imgAtual <> "imgRetire" Then
+                                picEstado.Image = imgRetire
+                                imgAtual = "imgRetire"
+                            End If
+
+                            DisplayLabel_Limpar()
+                            If Parametros.strVoltarPadrao = "SIM" Then
+                                wait(3000)
+                                SQLControl.ConsultarProduto(Parametros.strCodProduto, Produto, "frmPdvVenda - Tratar_Peso")
+                                DisplayLabelNomeProduto(Produto.Codigo + " - " + Produto.Nome + " (R$ " + CType(Produto.Preco_Produto, Decimal).ToString("#,##0.00") + ")")
+                            End If
+                        End If
+                        Exit Sub
+                    End If
+
+                    'F2
+                    If lblNomeProduto.Text.Contains("MARMITEX") Then
+                        If CType(strDadosPortaSerial_Peso, Decimal) >= "00001" And
+                       CType(strDadosPortaSerial_Peso, Decimal) <= "00538" Then
+
+#Region "PARAMETROS - CODIGO COMANDA"
+
+                            'Dim strCodComandaDHMS As String = Format(Now, "ddhhmmss")
+                            Dim strCodComandaDHMS As String = String.Empty
+
+                            If Parametros.strPrefixoComanda = "Nenhum" Then
+                                Parametros.strPrefixoComanda = ""
+                            End If
+
+                            If Parametros.strModoAuto = "Dia - Hora - Min - Seg" Then
+                                strCodComandaDHMS = Format(Now, "ddHHmmss")
+                            End If
+
+                            If Parametros.strModoAuto = "Sequencial" Then
+                                If ComandaAtivaCodigo = String.Empty Then
+                                    strCodComandaDHMS = SQLControl.GetCodigoUltimaComanda_Config("frmPdvVenda - Tratar_Peso")
+
+                                    If strCodComandaDHMS = "0" Or strCodComandaDHMS = "" Or strCodComandaDHMS = String.Empty Then
+                                        strCodComandaDHMS = "1"
+                                    End If
+                                End If
+                            End If
+
+                            If ComandaAtivaCodigo <> String.Empty Then
+                                strCodComandaDHMS = ComandaAtivaCodigo
+                            End If
+#End Region
+
+                            SQLControl.ConsultarProduto(Parametros.CodMarmitex1, Produto, "frmPdvVenda - Tratar")
+                            DisplayLabelNomeProduto(Produto.Codigo + " - " + Produto.Nome + " (R$ " + CType(Produto.Preco_Produto, Decimal).ToString("#,##0.00") + ")")
+
+                            Dim dValor As Decimal = Produto.Preco_Produto
+                            Dim dQtd As Decimal = CType(strDadosPortaSerial_Peso, Decimal) / 1000
+                            Dim dResultado As Decimal = dQtd * dValor
+
+                            Display(
+                            dQtd.ToString("#,###0.000"),
+                            dResultado.ToString("#,##0.00"))
+
+                            Dim strdQtd_IMP As String = "(" + dQtd.ToString("#,###0.000") + "Kg)"
+                            Dim strdResultado_IMP As String = "R$ " + dResultado.ToString("#,##0.00")
+
+                            If SQLControl.InserirComanda(
+                                                     Produto.Codigo,
+                                                     Parametros.strCodEmpresa,
+                                                     Parametros.strCodDeposito,
+                                                     Parametros.strCodVendedor,
+                                                     dQtd,
+                                                     Produto.Preco_Produto,
+                                                     dResultado,
+                                                     Parametros.strPrefixoComanda + strCodComandaDHMS,
+                                                     "32"
+                                                     ) = True Then
+
+
+                                SQLControl.InserirComanda_s(Produto.Codigo,
+                                                        Parametros.strCodEmpresa,
+                                                        Parametros.strCodDeposito,
+                                                        Parametros.strCodVendedor,
+                                                        dQtd,
+                                                        Produto.Preco_Produto,
+                                                        dResultado,
+                                                        Parametros.strPrefixoComanda + strCodComandaDHMS,
+                                                        "32"
+                                                        )
+
+                                Impressao.Imprimir(
+                                               Parametros.strPrefixoComanda + strCodComandaDHMS,
+                                               Produto.Nome,
+                                               strdQtd_IMP,
+                                               strdResultado_IMP,
+                                               Parametros.strImpCodBarr,
+                                               Parametros.strImpQRCod,
+                                               Parametros.strImpLogo, False
+                                               )
+                            Else
+                                Application.Restart()
+                            End If
+
+                            If imgAtual <> "imgRetire" Then
+                                picEstado.Image = imgRetire
+                                imgAtual = "imgRetire"
+                            End If
+                            DisplayLabel_Limpar()
+                            If Parametros.strVoltarPadrao = "SIM" Then
+                                wait(3000)
+                                SQLControl.ConsultarProduto(Parametros.strCodProduto, Produto, "frmPdvVenda - Tratar_Peso")
+                                DisplayLabelNomeProduto(Produto.Codigo + " - " + Produto.Nome + " (R$ " + CType(Produto.Preco_Produto, Decimal).ToString("#,##0.00") + ")")
+                            End If
+                        End If
+
+
+                        If CType(strDadosPortaSerial_Peso, Decimal) >= "00539" And
+                            CType(strDadosPortaSerial_Peso, Decimal) <= "00750" Then
+
+#Region "PARAMETROS - CODIGO COMANDA"
+
+                            'Dim strCodComandaDHMS As String = Format(Now, "ddhhmmss")
+                            Dim strCodComandaDHMS As String = String.Empty
+
+                            If Parametros.strPrefixoComanda = "Nenhum" Then
+                                Parametros.strPrefixoComanda = ""
+                            End If
+
+                            If Parametros.strModoAuto = "Dia - Hora - Min - Seg" Then
+                                strCodComandaDHMS = Format(Now, "ddHHmmss")
+                            End If
+
+                            If Parametros.strModoAuto = "Sequencial" Then
+                                If ComandaAtivaCodigo = String.Empty Then
+                                    strCodComandaDHMS = SQLControl.GetCodigoUltimaComanda_Config("frmPdvVenda - Tratar_Peso")
+
+                                    If strCodComandaDHMS = "0" Or strCodComandaDHMS = "" Or strCodComandaDHMS = String.Empty Then
+                                        strCodComandaDHMS = "1"
+                                    End If
+                                End If
+                            End If
+
+                            If ComandaAtivaCodigo <> String.Empty Then
+                                strCodComandaDHMS = ComandaAtivaCodigo
+                            End If
+
+#End Region
+
+                            SQLControl.ConsultarProduto(Parametros.CodMarmitex2, Produto, "frmPdvVenda - Tratar_Peso")
+                            DisplayLabelNomeProduto(Produto.Codigo + " - " + Produto.Nome + " (R$ " + CType(Produto.Preco_Produto, Decimal).ToString("#,##0.00") + ")")
+
+                            Dim dValor As Decimal = Produto.Preco_Produto
+                            Dim dQtd As Decimal = CType(strDadosPortaSerial_Peso, Decimal) / 1000
+                            Dim dQtd_UN As Decimal = 1
+                            Dim dResultado As Decimal = dQtd * dValor
+                            Dim dResultado_UN As Decimal = dQtd_UN * dValor
+
+                            Display(
+                            dQtd.ToString("#,###0.000"),
+                            dResultado_UN.ToString("#,##0.00"))
+
+                            Dim strdQtd_IMP As String = "(" + dQtd.ToString("#,###0.000") + "Kg)"
+                            Dim strdResultado_IMP As String = "R$ " + dResultado_UN.ToString("#,##0.00")
+
+                            If SQLControl.InserirComanda(
+                                                     Produto.Codigo,
+                                                     Parametros.strCodEmpresa,
+                                                     Parametros.strCodDeposito,
+                                                     Parametros.strCodVendedor,
+                                                     dQtd_UN,
+                                                     Produto.Preco_Produto,
+                                                     dResultado_UN,
+                                                     Parametros.strPrefixoComanda + strCodComandaDHMS,
+                                                     "32"
+                                                    ) = True Then
+
+                                SQLControl.InserirComanda_s(Produto.Codigo,
+                                                        Parametros.strCodEmpresa,
+                                                        Parametros.strCodDeposito,
+                                                        Parametros.strCodVendedor,
+                                                        dQtd,
+                                                        Produto.Preco_Produto,
+                                                        dResultado,
+                                                        Parametros.strPrefixoComanda + strCodComandaDHMS,
+                                                        "32"
+                                                        )
+
+                                Impressao.Imprimir(
+                                               Parametros.strPrefixoComanda + strCodComandaDHMS,
+                                               Produto.Nome,
+                                               strdQtd_IMP,
+                                               strdResultado_IMP,
+                                               Parametros.strImpCodBarr,
+                                               Parametros.strImpQRCod,
+                                               Parametros.strImpLogo, False
+                                              )
+
+                            Else
+                                Application.Restart()
+                            End If
+                            DisplayLabel_Limpar()
+                            picEstado.Image = imgRetire
+                            If Parametros.strVoltarPadrao = "SIM" Then
+                                wait(3000)
+                                SQLControl.ConsultarProduto(Parametros.strCodProduto, Produto, "frmPdvVenda - Tratar_Peso")
+                                DisplayLabelNomeProduto(Produto.Codigo + " - " + Produto.Nome + " (R$ " + CType(Produto.Preco_Produto, Decimal).ToString("#,##0.00") + ")")
+                            End If
+                            Exit Sub
+
+                        End If
+
+
+                        If CType(strDadosPortaSerial_Peso, Decimal) >= "00751" Then
+
+#Region "PARAMETROS - CODIGO COMANDA"
+
+                            'Dim strCodComandaDHMS As String = Format(Now, "ddhhmmss")
+                            Dim strCodComandaDHMS As String = String.Empty
+
+                            If Parametros.strPrefixoComanda = "Nenhum" Then
+                                Parametros.strPrefixoComanda = ""
+                            End If
+
+                            If Parametros.strModoAuto = "Dia - Hora - Min - Seg" Then
+                                strCodComandaDHMS = Format(Now, "ddHHmmss")
+                            End If
+
+                            If Parametros.strModoAuto = "Sequencial" Then
+                                If ComandaAtivaCodigo = String.Empty Then
+                                    strCodComandaDHMS = SQLControl.GetCodigoUltimaComanda_Config("frmPdvVenda - Tratar_Peso")
+
+                                    If strCodComandaDHMS = "0" Or strCodComandaDHMS = "" Or strCodComandaDHMS = String.Empty Then
+                                        strCodComandaDHMS = "1"
+                                    End If
+                                End If
+                            End If
+
+                            If ComandaAtivaCodigo <> String.Empty Then
+                                strCodComandaDHMS = ComandaAtivaCodigo
+                            End If
+
+#End Region
+                            'Parametros.strCodProduto2
+                            SQLControl.ConsultarProduto(Parametros.CodMarmitex3, Produto, "frmPdvVenda - Tratar_Peso")
+                            DisplayLabelNomeProduto(Produto.Codigo + " - " + Produto.Nome + " (R$ " + CType(Produto.Preco_Produto, Decimal).ToString("#,##0.00") + ")")
+
+                            Dim dValor As Decimal = Produto.Preco_Produto
+                            Dim dQtd As Decimal = CType(strDadosPortaSerial_Peso, Decimal) / 1000
+                            Dim dQtd_UN As Decimal = 1
+                            Dim dResultado As Decimal = dQtd * dValor
+                            Dim dResultado_UN As Decimal = dQtd_UN * dValor
+
+                            Display(
+                            dQtd.ToString("#,###0.000"),
+                            dResultado_UN.ToString("#,##0.00"))
+
+                            Dim strdQtd_IMP As String = "(" + dQtd.ToString("#,###0.000") + "Kg)"
+                            Dim strdResultado_IMP As String = "R$ " + dResultado_UN.ToString("#,##0.00")
+
+                            If SQLControl.InserirComanda(
+                                                     Produto.Codigo,
+                                                     Parametros.strCodEmpresa,
+                                                     Parametros.strCodDeposito,
+                                                     Parametros.strCodVendedor,
+                                                     dQtd_UN,
+                                                     Produto.Preco_Produto,
+                                                     dResultado_UN,
+                                                     Parametros.strPrefixoComanda + strCodComandaDHMS,
+                                                     "32"
+                                                    ) = True Then
+
+                                SQLControl.InserirComanda_s(Produto.Codigo,
+                                                        Parametros.strCodEmpresa,
+                                                        Parametros.strCodDeposito,
+                                                        Parametros.strCodVendedor,
+                                                        dQtd,
+                                                        Produto.Preco_Produto,
+                                                        dResultado,
+                                                        Parametros.strPrefixoComanda + strCodComandaDHMS,
+                                                        "32"
+                                                        )
+
+                                Impressao.Imprimir(
+                                               Parametros.strPrefixoComanda + strCodComandaDHMS,
+                                               Produto.Nome,
+                                               strdQtd_IMP,
+                                               strdResultado_IMP,
+                                               Parametros.strImpCodBarr,
+                                               Parametros.strImpQRCod,
+                                               Parametros.strImpLogo, False
+                                              )
+
+                            Else
+                                Application.Restart()
+                            End If
+                            DisplayLabel_Limpar()
+
+                            If imgAtual <> "imgRetire" Then
+                                picEstado.Image = imgRetire
+                                imgAtual = "imgRetire"
+                            End If
+                            If Parametros.strVoltarPadrao = "SIM" Then
+                                wait(3000)
+                                SQLControl.ConsultarProduto(Parametros.strCodProduto, Produto, "frmPdvVenda - Tratar_Peso")
+                                DisplayLabelNomeProduto(Produto.Codigo + " - " + Produto.Nome + " (R$ " + CType(Produto.Preco_Produto, Decimal).ToString("#,##0.00") + ")")
+                            End If
+                            Exit Sub
+
+                        End If
+                        Exit Sub
+                    End If
+
+                    'F1
+                    If lblNomeProduto.Text.Contains("SELF") Then
+
+                        If CType(strDadosPortaSerial_Peso, Decimal) >= "00001" And
+                           CType(strDadosPortaSerial_Peso, Decimal) <= "00538" Then
+
+#Region "PARAMETROS - CODIGO COMANDA"
+
+                            'Dim strCodComandaDHMS As String = Format(Now, "ddhhmmss")
+                            Dim strCodComandaDHMS As String = String.Empty
+
+                            If Parametros.strPrefixoComanda = "Nenhum" Then
+                                Parametros.strPrefixoComanda = ""
+                            End If
+
+                            If Parametros.strModoAuto = "Dia - Hora - Min - Seg" Then
+                                strCodComandaDHMS = Format(Now, "ddHHmmss")
+                            End If
+
+                            If Parametros.strModoAuto = "Sequencial" Then
+                                If ComandaAtivaCodigo = String.Empty Then
+                                    strCodComandaDHMS = SQLControl.GetCodigoUltimaComanda_Config("frmPdvVenda - Tratar_Peso")
+
+                                    If strCodComandaDHMS = "0" Or strCodComandaDHMS = "" Or strCodComandaDHMS = String.Empty Then
+                                        strCodComandaDHMS = "1"
+                                    End If
+                                End If
+                            End If
+
+                            If ComandaAtivaCodigo <> String.Empty Then
+                                strCodComandaDHMS = ComandaAtivaCodigo
+                            End If
+#End Region
+
+                            SQLControl.ConsultarProduto(Parametros.CodSelf1, Produto, "frmPdvVenda - Tratar")
+                            DisplayLabelNomeProduto(Produto.Codigo + " - " + Produto.Nome + " (R$ " + CType(Produto.Preco_Produto, Decimal).ToString("#,##0.00") + ")")
+
+                            Dim dValor As Decimal = Produto.Preco_Produto
+                            Dim dQtd As Decimal = CType(strDadosPortaSerial_Peso, Decimal) / 1000
+                            Dim dResultado As Decimal = dQtd * dValor
+
+                            Display(
+                            dQtd.ToString("#,###0.000"),
+                            dResultado.ToString("#,##0.00"))
+
+                            Dim strdQtd_IMP As String = "(" + dQtd.ToString("#,###0.000") + "Kg)"
+                            Dim strdResultado_IMP As String = "R$ " + dResultado.ToString("#,##0.00")
+
+                            If SQLControl.InserirComanda(
+                                                     Produto.Codigo,
+                                                     Parametros.strCodEmpresa,
+                                                     Parametros.strCodDeposito,
+                                                     Parametros.strCodVendedor,
+                                                     dQtd,
+                                                     Produto.Preco_Produto,
+                                                     dResultado,
+                                                     Parametros.strPrefixoComanda + strCodComandaDHMS,
+                                                     "1"
+                                                     ) = True Then
+
+
+                                SQLControl.InserirComanda_s(Produto.Codigo,
+                                                        Parametros.strCodEmpresa,
+                                                        Parametros.strCodDeposito,
+                                                        Parametros.strCodVendedor,
+                                                        dQtd,
+                                                        Produto.Preco_Produto,
+                                                        dResultado,
+                                                        Parametros.strPrefixoComanda + strCodComandaDHMS,
+                                                        "1"
+                                                        )
+
+                                Impressao.Imprimir(
+                                               Parametros.strPrefixoComanda + strCodComandaDHMS,
+                                               Produto.Nome,
+                                               strdQtd_IMP,
+                                               strdResultado_IMP,
+                                               Parametros.strImpCodBarr,
+                                               Parametros.strImpQRCod,
+                                               Parametros.strImpLogo, False
+                                               )
+                            Else
+                                Application.Restart()
+                            End If
+
+                            If imgAtual <> "imgRetire" Then
+                                picEstado.Image = imgRetire
+                                imgAtual = "imgRetire"
+                            End If
+                            DisplayLabel_Limpar()
+                            If Parametros.strVoltarPadrao = "SIM" Then
+                                wait(3000)
+                                SQLControl.ConsultarProduto(Parametros.strCodProduto, Produto, "frmPdvVenda - Tratar_Peso")
+                                DisplayLabelNomeProduto(Produto.Codigo + " - " + Produto.Nome + " (R$ " + CType(Produto.Preco_Produto, Decimal).ToString("#,##0.00") + ")")
+                            End If
+                        End If
+
+
+                        If CType(strDadosPortaSerial_Peso, Decimal) >= "00539" And
+                           CType(strDadosPortaSerial_Peso, Decimal) <= "00750" Then
+
+#Region "PARAMETROS - CODIGO COMANDA"
+
+                            'Dim strCodComandaDHMS As String = Format(Now, "ddhhmmss")
+                            Dim strCodComandaDHMS As String = String.Empty
+
+                            If Parametros.strPrefixoComanda = "Nenhum" Then
+                                Parametros.strPrefixoComanda = ""
+                            End If
+
+                            If Parametros.strModoAuto = "Dia - Hora - Min - Seg" Then
+                                strCodComandaDHMS = Format(Now, "ddHHmmss")
+                            End If
+
+                            If Parametros.strModoAuto = "Sequencial" Then
+                                If ComandaAtivaCodigo = String.Empty Then
+                                    strCodComandaDHMS = SQLControl.GetCodigoUltimaComanda_Config("frmPdvVenda - Tratar_Peso")
+
+                                    If strCodComandaDHMS = "0" Or strCodComandaDHMS = "" Or strCodComandaDHMS = String.Empty Then
+                                        strCodComandaDHMS = "1"
+                                    End If
+                                End If
+                            End If
+
+                            If ComandaAtivaCodigo <> String.Empty Then
+                                strCodComandaDHMS = ComandaAtivaCodigo
+                            End If
+
+#End Region
+
+                            SQLControl.ConsultarProduto(Parametros.CodSelf2, Produto, "frmPdvVenda - Tratar_Peso")
+                            DisplayLabelNomeProduto(Produto.Codigo + " - " + Produto.Nome + " (R$ " + CType(Produto.Preco_Produto, Decimal).ToString("#,##0.00") + ")")
+
+                            Dim dValor As Decimal = Produto.Preco_Produto
+                            Dim dQtd As Decimal = CType(strDadosPortaSerial_Peso, Decimal) / 1000
+                            Dim dQtd_UN As Decimal = 1
+                            Dim dResultado As Decimal = dQtd * dValor
+                            Dim dResultado_UN As Decimal = dQtd_UN * dValor
+
+                            Display(
+                            dQtd.ToString("#,###0.000"),
+                            dResultado_UN.ToString("#,##0.00"))
+
+                            Dim strdQtd_IMP As String = "(" + dQtd.ToString("#,###0.000") + "Kg)"
+                            Dim strdResultado_IMP As String = "R$ " + dResultado_UN.ToString("#,##0.00")
+
+                            If SQLControl.InserirComanda(
+                                                     Produto.Codigo,
+                                                     Parametros.strCodEmpresa,
+                                                     Parametros.strCodDeposito,
+                                                     Parametros.strCodVendedor,
+                                                     dQtd_UN,
+                                                     Produto.Preco_Produto,
+                                                     dResultado_UN,
+                                                     Parametros.strPrefixoComanda + strCodComandaDHMS,
+                                                     "1"
+                                                    ) = True Then
+
+                                SQLControl.InserirComanda_s(Produto.Codigo,
+                                                        Parametros.strCodEmpresa,
+                                                        Parametros.strCodDeposito,
+                                                        Parametros.strCodVendedor,
+                                                        dQtd,
+                                                        Produto.Preco_Produto,
+                                                        dResultado,
+                                                        Parametros.strPrefixoComanda + strCodComandaDHMS,
+                                                        "1"
+                                                        )
+
+                                Impressao.Imprimir(
+                                               Parametros.strPrefixoComanda + strCodComandaDHMS,
+                                               Produto.Nome,
+                                               strdQtd_IMP,
+                                               strdResultado_IMP,
+                                               Parametros.strImpCodBarr,
+                                               Parametros.strImpQRCod,
+                                               Parametros.strImpLogo, False
+                                              )
+
+                            Else
+                                Application.Restart()
+                            End If
+                            DisplayLabel_Limpar()
+                            If imgAtual <> "imgRetire" Then
+                                picEstado.Image = imgRetire
+                                imgAtual = "imgRetire"
+                            End If
+                            If Parametros.strVoltarPadrao = "SIM" Then
+                                wait(3000)
+                                SQLControl.ConsultarProduto(Parametros.strCodProduto, Produto, "frmPdvVenda - Tratar_Peso")
+                                DisplayLabelNomeProduto(Produto.Codigo + " - " + Produto.Nome + " (R$ " + CType(Produto.Preco_Produto, Decimal).ToString("#,##0.00") + ")")
+                            End If
+                            Exit Sub
+
+                        End If
+
+
+                        If CType(strDadosPortaSerial_Peso, Decimal) >= "00751" Then
+
+#Region "PARAMETROS - CODIGO COMANDA"
+
+                            'Dim strCodComandaDHMS As String = Format(Now, "ddhhmmss")
+                            Dim strCodComandaDHMS As String = String.Empty
+
+                            If Parametros.strPrefixoComanda = "Nenhum" Then
+                                Parametros.strPrefixoComanda = ""
+                            End If
+
+                            If Parametros.strModoAuto = "Dia - Hora - Min - Seg" Then
+                                strCodComandaDHMS = Format(Now, "ddHHmmss")
+                            End If
+
+                            If Parametros.strModoAuto = "Sequencial" Then
+                                If ComandaAtivaCodigo = String.Empty Then
+                                    strCodComandaDHMS = SQLControl.GetCodigoUltimaComanda_Config("frmPdvVenda - Tratar_Peso")
+
+                                    If strCodComandaDHMS = "0" Or strCodComandaDHMS = "" Or strCodComandaDHMS = String.Empty Then
+                                        strCodComandaDHMS = "1"
+                                    End If
+                                End If
+                            End If
+
+                            If ComandaAtivaCodigo <> String.Empty Then
+                                strCodComandaDHMS = ComandaAtivaCodigo
+                            End If
+
+#End Region
+                            'Parametros.strCodProduto2
+                            SQLControl.ConsultarProduto(Parametros.CodSelf3, Produto, "frmPdvVenda - Tratar_Peso")
+                            DisplayLabelNomeProduto(Produto.Codigo + " - " + Produto.Nome + " (R$ " + CType(Produto.Preco_Produto, Decimal).ToString("#,##0.00") + ")")
+
+                            Dim dValor As Decimal = Produto.Preco_Produto
+                            Dim dQtd As Decimal = CType(strDadosPortaSerial_Peso, Decimal) / 1000
+                            Dim dQtd_UN As Decimal = 1
+                            Dim dResultado As Decimal = dQtd * dValor
+                            Dim dResultado_UN As Decimal = dQtd_UN * dValor
+
+                            Display(
+                            dQtd.ToString("#,###0.000"),
+                            dResultado_UN.ToString("#,##0.00"))
+
+                            Dim strdQtd_IMP As String = "(" + dQtd.ToString("#,###0.000") + "Kg)"
+                            Dim strdResultado_IMP As String = "R$ " + dResultado_UN.ToString("#,##0.00")
+
+                            If SQLControl.InserirComanda(
+                                                     Produto.Codigo,
+                                                     Parametros.strCodEmpresa,
+                                                     Parametros.strCodDeposito,
+                                                     Parametros.strCodVendedor,
+                                                     dQtd_UN,
+                                                     Produto.Preco_Produto,
+                                                     dResultado_UN,
+                                                     Parametros.strPrefixoComanda + strCodComandaDHMS,
+                                                     "1"
+                                                    ) = True Then
+
+                                SQLControl.InserirComanda_s(Produto.Codigo,
+                                                        Parametros.strCodEmpresa,
+                                                        Parametros.strCodDeposito,
+                                                        Parametros.strCodVendedor,
+                                                        dQtd,
+                                                        Produto.Preco_Produto,
+                                                        dResultado,
+                                                        Parametros.strPrefixoComanda + strCodComandaDHMS,
+                                                        "1"
+                                                        )
+
+                                Impressao.Imprimir(
+                                               Parametros.strPrefixoComanda + strCodComandaDHMS,
+                                               Produto.Nome,
+                                               strdQtd_IMP,
+                                               strdResultado_IMP,
+                                               Parametros.strImpCodBarr,
+                                               Parametros.strImpQRCod,
+                                               Parametros.strImpLogo, False
+                                              )
+
+                            Else
+                                Application.Restart()
+                            End If
+                            DisplayLabel_Limpar()
+                            If imgAtual <> "imgRetire" Then
+                                picEstado.Image = imgRetire
+                                imgAtual = "imgRetire"
+                            End If
+                            If Parametros.strVoltarPadrao = "SIM" Then
+                                wait(3000)
+                                SQLControl.ConsultarProduto(Parametros.strCodProduto, Produto, "frmPdvVenda - Tratar_Peso")
+                                DisplayLabelNomeProduto(Produto.Codigo + " - " + Produto.Nome + " (R$ " + CType(Produto.Preco_Produto, Decimal).ToString("#,##0.00") + ")")
+                            End If
+                            Exit Sub
+
+                        End If
+
+                        Exit Sub
+                    End If
+
+                    'F4
+                    If lblNomeProduto.Text.Contains("MARMITX") Then
+                        If CType(strDadosPortaSerial_Peso, Decimal) <> "00000" Then
+
+#Region "PARAMETROS - CODIGO COMANDA"
+
+                            'Dim strCodComandaDHMS As String = Format(Now, "ddhhmmss")
+                            Dim strCodComandaDHMS As String = String.Empty
+
+                            If Parametros.strPrefixoComanda = "Nenhum" Then
+                                Parametros.strPrefixoComanda = ""
+                            End If
+
+                            If Parametros.strModoAuto = "Dia - Hora - Min - Seg" Then
+                                strCodComandaDHMS = Format(Now, "ddHHmmss")
+                            End If
+
+                            If Parametros.strModoAuto = "Sequencial" Then
+                                If ComandaAtivaCodigo = String.Empty Then
+                                    strCodComandaDHMS = SQLControl.GetCodigoUltimaComanda_Config("frmPdvVenda - Tratar_Peso")
+
+                                    If strCodComandaDHMS = "0" Or strCodComandaDHMS = "" Or strCodComandaDHMS = String.Empty Then
+                                        strCodComandaDHMS = "1"
+                                    End If
+                                End If
+                            End If
+
+                            If ComandaAtivaCodigo <> String.Empty Then
+                                strCodComandaDHMS = ComandaAtivaCodigo
+                            End If
+#End Region
+
+
+                            Dim dValor As Decimal = Produto.Preco_Produto
+                            Dim dQtd As Decimal = CType(strDadosPortaSerial_Peso, Decimal) / 1000
+                            Dim dResultado As Decimal = dQtd * dValor
+
+                            Display(
+                            dQtd.ToString("#,###0.000"),
+                            dResultado.ToString("#,##0.00"))
+
+                            Dim strdQtd_IMP As String = "(" + dQtd.ToString("#,###0.000") + "Kg)"
+                            Dim strdResultado_IMP As String = "R$ " + dResultado.ToString("#,##0.00")
+
+                            If SQLControl.InserirComanda(
+                                                         Produto.Codigo,
+                                                         Parametros.strCodEmpresa,
+                                                         Parametros.strCodDeposito,
+                                                         Parametros.strCodVendedor,
+                                                         dQtd,
+                                                         Produto.Preco_Produto,
+                                                         dResultado,
+                                                         Parametros.strPrefixoComanda + strCodComandaDHMS,
+                                                         "32"
+                                                         ) = True Then
+
+
+                                SQLControl.InserirComanda_s(Produto.Codigo,
+                                                            Parametros.strCodEmpresa,
+                                                            Parametros.strCodDeposito,
+                                                            Parametros.strCodVendedor,
+                                                            dQtd,
+                                                            Produto.Preco_Produto,
+                                                            dResultado,
+                                                            Parametros.strPrefixoComanda + strCodComandaDHMS,
+                                                            "32"
+                                                            )
+
+                                Impressao.Imprimir(
+                                                   Parametros.strPrefixoComanda + strCodComandaDHMS,
+                                                   Produto.Nome,
+                                                   strdQtd_IMP,
+                                                   strdResultado_IMP,
+                                                   Parametros.strImpCodBarr,
+                                                   Parametros.strImpQRCod,
+                                                   Parametros.strImpLogo, False
+                                                   )
+                            Else
+                                Application.Restart()
+                            End If
+                            If imgAtual <> "imgRetire" Then
+                                picEstado.Image = imgRetire
+                                imgAtual = "imgRetire"
+                            End If
+                            DisplayLabel_Limpar()
+                            If Parametros.strVoltarPadrao = "SIM" Then
+                                wait(3000)
+                                SQLControl.ConsultarProduto(Parametros.strCodProduto, Produto, "frmPdvVenda - Tratar_Peso")
+                                DisplayLabelNomeProduto(Produto.Codigo + " - " + Produto.Nome + " (R$ " + CType(Produto.Preco_Produto, Decimal).ToString("#,##0.00") + ")")
+                            End If
+                        End If
+                    End If
+
+                End If
+
 
 
             End If
@@ -2032,7 +3724,18 @@ Public Class frmPdvVenda
 #End Region
 
 
+
+
+
+
+
+
     End Sub
+
+
+
+
+
 
 
     Private Sub picEstado_DoubleClick(sender As Object, e As EventArgs) Handles picEstado.DoubleClick
@@ -2081,13 +3784,16 @@ Public Class frmPdvVenda
     Private Sub SplitContainer2_SplitterMoved(sender As Object, e As SplitterEventArgs) Handles SplitContainer2.SplitterMoved
         lblNomeProduto.Focus()
     End Sub
+
     Public Sub FecharOpcionais()
         frmSelecionarP.Close()
     End Sub
+
     Private Sub wait(ByVal millisecondsTimeout As Integer)
         Threading.Thread.Sleep(millisecondsTimeout)
         Application.DoEvents()
     End Sub
+
     Private Sub lblNomeProduto_LinkClicked(sender As Object, e As LinkLabelLinkClickedEventArgs) Handles lblNomeProduto.LinkClicked
         Abrir_Fechar_OpMenu()
     End Sub

@@ -33,7 +33,16 @@
             End With
 
             array = array + 1
-            SQLControl.ConsultarProduto(palavra, ProdutoObj, "frmSelecionarProduto")
+
+            If Parametros.strSistemaIntegrado = "Sischef" Then
+                SQLControl.ConsultarProdutoPostgres(palavra, ProdutoObj, "frmSelecionarProduto")
+            End If
+
+
+            If Parametros.strSistemaIntegrado = "Sismoura" Then
+                SQLControl.ConsultarProduto(palavra, ProdutoObj, "frmSelecionarProduto")
+            End If
+
             btnProdutos.lblNomeProduto.Text = ProdutoObj.Codigo + "-" + ProdutoObj.Nome
             btnProdutos.Show()
         Next

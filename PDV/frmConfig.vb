@@ -452,17 +452,36 @@ Public Class frmConfig
 
     Private Sub lblTesteConn_LinkClicked(sender As Object, e As LinkLabelLinkClickedEventArgs) Handles lblTesteConn.LinkClicked
 
+        If Parametros.strSistemaIntegrado = "Sischef" Then
 
-        If SQLControl.Testar_Conn_t(txtEnderecoServidor.Text,
-                                      txtNomeBanco.Text,
-                                      txtUsuarioBanco.Text,
-                                      txtSenhaBanco.Text, Mensagem, "lblTesteConn_LinkClicked") = True Then
+            If SQLControl.Testar_Conn_tPostgres(txtEnderecoServidor.Text,
+                              txtNomeBanco.Text,
+                              txtUsuarioBanco.Text,
+                              txtSenhaBanco.Text, Mensagem, "lblTesteConn_LinkClickedPostgres") = True Then
 
-            MessageBox.Show("Conexão com o banco de dados estabelecida com sucesso.",
-                Application.CompanyName, MessageBoxButtons.OK, MessageBoxIcon.Information)
-        Else
-            MessageBox.Show("Não foi possivel estabelecer uma conexão com banco de dados." + vbCr + vbCr + Mensagem.Mensagem,
-                Application.CompanyName, MessageBoxButtons.OK, MessageBoxIcon.Error)
+                MessageBox.Show("Conexão com o banco de dados estabelecida com sucesso.",
+                    Application.CompanyName, MessageBoxButtons.OK, MessageBoxIcon.Information)
+            Else
+                MessageBox.Show("Não foi possivel estabelecer uma conexão com banco de dados." + vbCr + vbCr + Mensagem.Mensagem,
+                    Application.CompanyName, MessageBoxButtons.OK, MessageBoxIcon.Error)
+            End If
+
+        End If
+
+        If Parametros.strSistemaIntegrado = "Sismoura" Then
+
+            If SQLControl.Testar_Conn_t(txtEnderecoServidor.Text,
+                              txtNomeBanco.Text,
+                              txtUsuarioBanco.Text,
+                              txtSenhaBanco.Text, Mensagem, "lblTesteConn_LinkClicked") = True Then
+
+                MessageBox.Show("Conexão com o banco de dados estabelecida com sucesso.",
+                    Application.CompanyName, MessageBoxButtons.OK, MessageBoxIcon.Information)
+            Else
+                MessageBox.Show("Não foi possivel estabelecer uma conexão com banco de dados." + vbCr + vbCr + Mensagem.Mensagem,
+                    Application.CompanyName, MessageBoxButtons.OK, MessageBoxIcon.Error)
+            End If
+
         End If
 
 
@@ -471,32 +490,68 @@ Public Class frmConfig
     Private Sub lblConsultar_LinkClicked(sender As Object, e As LinkLabelLinkClickedEventArgs) Handles lblConsultar.LinkClicked
 
 
-        If SQLControl.ConsultarProduto(txtCodProduto.Text, Produto, "lblConsultar_LinkClicked") = True Then
-            MessageBox.Show("Codigo: " + Produto.Codigo + vbCrLf +
-                            "Codigo Barra: " + Produto.Codigo_Barra + vbCrLf +
-                            "Nome: " + Produto.Nome + vbCrLf +
-                            "Preço: R$ " + CType(Produto.Preco_Produto, Decimal).ToString("#,##0.00"),
-            Application.CompanyName, MessageBoxButtons.OK, MessageBoxIcon.Information)
-        Else
-            MessageBox.Show("Mensagem: " + vbCrLf + vbCrLf + Produto.Nome + vbCrLf,
-    Application.CompanyName, MessageBoxButtons.OK, MessageBoxIcon.Exclamation)
+        If Parametros.strSistemaIntegrado = "Sischef" Then
+
+            If SQLControl.ConsultarProdutoPostgres(txtCodProduto.Text, Produto, "lblConsultar_LinkClickedPostgres") = True Then
+                MessageBox.Show("Codigo: " + Produto.Codigo + vbCrLf +
+                                "Codigo Barra: " + Produto.Codigo_Barra + vbCrLf +
+                                "Nome: " + Produto.Nome + vbCrLf +
+                                "Preço: R$ " + CType(Produto.Preco_Produto, Decimal).ToString("#,##0.00"),
+                Application.CompanyName, MessageBoxButtons.OK, MessageBoxIcon.Information)
+            Else
+                MessageBox.Show("Mensagem: " + vbCrLf + vbCrLf + Produto.Nome + vbCrLf,
+                Application.CompanyName, MessageBoxButtons.OK, MessageBoxIcon.Exclamation)
+
+            End If
+
+            If txtCodProdutoOpcionais.Text = "" Then Exit Sub
+            'VERIFICA PRODUTOS CONFIGURADOS
+            Dim str As String = txtCodProdutoOpcionais.Text
+            Dim palavras As String() = str.Split(New Char() {","c})
+            Dim palavra As String
+
+            For Each palavra In palavras
+                If SQLControl.ConsultarProdutoPostgres(palavra, Produto, "lblConsultar_LinkClicked") = False And Parametros.strstrCodProdutoOpcio <> String.Empty Then
+                    MessageBox.Show("Ocorreu um erro na verificação do(s) produto(s) configurado(s)." + vbCrLf + "Opcionais: " + palavra + vbCrLf + vbCrLf + "Mensagem: " + Produto.Nome, My.Application.Info.Title, MessageBoxButtons.OK, MessageBoxIcon.Error)
+                End If
+            Next
+
+            If palavras.Length > 9 Then
+                MessageBox.Show("Alerta: Número de opcionais superior a 9 Codigos.", My.Application.Info.Title, MessageBoxButtons.OK, MessageBoxIcon.Information)
+            End If
 
         End If
 
-        If txtCodProdutoOpcionais.Text = "" Then Exit Sub
-        'VERIFICA PRODUTOS CONFIGURADOS
-        Dim str As String = txtCodProdutoOpcionais.Text
-        Dim palavras As String() = str.Split(New Char() {","c})
-        Dim palavra As String
+        If Parametros.strSistemaIntegrado = "Sismoura" Then
 
-        For Each palavra In palavras
-            If SQLControl.ConsultarProduto(palavra, Produto, "lblConsultar_LinkClicked") = False And Parametros.strstrCodProdutoOpcio <> String.Empty Then
-                MessageBox.Show("Ocorreu um erro na verificação do(s) produto(s) configurado(s)." + vbCrLf + "Opcionais: " + palavra + vbCrLf + vbCrLf + "Mensagem: " + Produto.Nome, My.Application.Info.Title, MessageBoxButtons.OK, MessageBoxIcon.Error)
+            If SQLControl.ConsultarProduto(txtCodProduto.Text, Produto, "lblConsultar_LinkClicked") = True Then
+                MessageBox.Show("Codigo: " + Produto.Codigo + vbCrLf +
+                                "Codigo Barra: " + Produto.Codigo_Barra + vbCrLf +
+                                "Nome: " + Produto.Nome + vbCrLf +
+                                "Preço: R$ " + CType(Produto.Preco_Produto, Decimal).ToString("#,##0.00"),
+                Application.CompanyName, MessageBoxButtons.OK, MessageBoxIcon.Information)
+            Else
+                MessageBox.Show("Mensagem: " + vbCrLf + vbCrLf + Produto.Nome + vbCrLf,
+                Application.CompanyName, MessageBoxButtons.OK, MessageBoxIcon.Exclamation)
+
             End If
-        Next
 
-        If palavras.Length > 9 Then
-            MessageBox.Show("Alerta: Número de opcionais superior a 9 Codigos.", My.Application.Info.Title, MessageBoxButtons.OK, MessageBoxIcon.Information)
+            If txtCodProdutoOpcionais.Text = "" Then Exit Sub
+            'VERIFICA PRODUTOS CONFIGURADOS
+            Dim str As String = txtCodProdutoOpcionais.Text
+            Dim palavras As String() = str.Split(New Char() {","c})
+            Dim palavra As String
+
+            For Each palavra In palavras
+                If SQLControl.ConsultarProduto(palavra, Produto, "lblConsultar_LinkClicked") = False And Parametros.strstrCodProdutoOpcio <> String.Empty Then
+                    MessageBox.Show("Ocorreu um erro na verificação do(s) produto(s) configurado(s)." + vbCrLf + "Opcionais: " + palavra + vbCrLf + vbCrLf + "Mensagem: " + Produto.Nome, My.Application.Info.Title, MessageBoxButtons.OK, MessageBoxIcon.Error)
+                End If
+            Next
+
+            If palavras.Length > 9 Then
+                MessageBox.Show("Alerta: Número de opcionais superior a 9 Codigos.", My.Application.Info.Title, MessageBoxButtons.OK, MessageBoxIcon.Information)
+            End If
+
         End If
 
     End Sub
@@ -702,7 +757,14 @@ Public Class frmConfig
     End Sub
 
     Private Sub lblZerarComanda_LinkClicked(sender As Object, e As LinkLabelLinkClickedEventArgs) Handles lblZerarComanda.LinkClicked
-        SQLControl.UpdateGetCodigoUltimaComanda_Zerar()
+
+        If Parametros.strSistemaIntegrado = "Sischef" Then
+            SQLControl.UpdateGetCodigoUltimaComanda_ZerarPostgres()
+        End If
+
+        If Parametros.strSistemaIntegrado = "Sismoura" Then
+            SQLControl.UpdateGetCodigoUltimaComanda_Zerar()
+        End If
 
     End Sub
 
@@ -730,26 +792,70 @@ Public Class frmConfig
 
     Private Sub lblGerar_LinkClicked(sender As Object, e As LinkLabelLinkClickedEventArgs) Handles lblGerar.LinkClicked
 
-        If txtFimKG.Text = "" Or txtInicioKG.Text = "" Then
-            txtInicioKG.Focus()
-            Return
+
+
+        If Parametros.strSistemaIntegrado = "Sischef" Then
+            If txtFimKG.Text = "" Or txtInicioKG.Text = "" Then
+                txtInicioKG.Focus()
+                Return
+            End If
+
+            Dim kgInicial As String = txtInicioKG.Text
+            kgInicial = kgInicial.Replace(",", ".")
+
+            Dim kgFinal As String = txtFimKG.Text
+            kgFinal = kgFinal.Replace(",", ".")
+
+
+            Dim Ini As String = Format(dtInicio.Value, "yyyy-MM-dd") + " 00:00:00.000000-00"
+            Dim Fim As String = Format(dtFim.Value, "yyyy-MM-dd") + " 23:59:59.000000-00"
+
+
+            Dim SQLQ =
+                   "SELECT v.Produto, 
+                   p.descricao AS Nome, 
+                   SUM(v.Quantidade /2) AS KG, 
+                   SUM(v.Total /2) AS Valor, 
+                   COUNT(*) /2 AS Quantidade 
+                   FROM Venda_Espera_SelfComanda v 
+                   INNER JOIN Produtos p ON v.Produto = p.id 
+                   WHERE v.Quantidade >= " + kgInicial + " 
+                   AND v.Quantidade <= " + kgFinal + "  
+                   AND v.data BETWEEN '" + Ini + "' AND '" + Fim + "'  
+                   GROUP BY v.Produto, p.descricao"
+
+
+            frmRelatorio.crtDatas = "Datas: " + Format(dtInicio.Value, "dd/MM/yyyy") + " - " + Format(dtFim.Value, "dd/MM/yyyy")
+            frmRelatorio.crtPesos = "Pesos: " + kgInicial + "Kg - " + kgFinal + "Kg"
+
+            frmRelatorio.sSQLQuery = SQLQ
+            frmRelatorio.StringConexao = SQLControl.strConexaoPostgres
+            frmRelatorio.Show()
         End If
 
-        Dim kgInicial As String = txtInicioKG.Text
-        kgInicial = kgInicial.Replace(",", ".")
 
-        Dim kgFinal As String = txtFimKG.Text
-        kgFinal = kgFinal.Replace(",", ".")
+        If Parametros.strSistemaIntegrado = "Sismoura" Then
+            If txtFimKG.Text = "" Or txtInicioKG.Text = "" Then
+                txtInicioKG.Focus()
+                Return
+            End If
+
+            Dim kgInicial As String = txtInicioKG.Text
+            kgInicial = kgInicial.Replace(",", ".")
+
+            Dim kgFinal As String = txtFimKG.Text
+            kgFinal = kgFinal.Replace(",", ".")
 
 
-        Dim Ini As String = Format(dtInicio.Value, "yyyy-MM-dd") + " 00:00:00.000"
-        Dim Fim As String = Format(dtFim.Value, "yyyy-MM-dd") + " 23:59:00.000"
+            Dim Ini As String = Format(dtInicio.Value, "yyyy-MM-dd") + " 00:00:00.000"
+            Dim Fim As String = Format(dtFim.Value, "yyyy-MM-dd") + " 23:59:00.000"
 
 
-
-
-        Dim SQLQ = "SELECT v.Produto,
-        p.Nome,sum(v.Quantidade) as KG,
+            Dim SQLQ = "
+        SELECT 
+        v.Produto,
+        p.Nome,
+        sum(v.Quantidade) as KG,
 	    sum(v.Total) as Valor,
 	    count(*) as Quantidade 
 	    FROM Venda_Espera_SelfComanda v 
@@ -757,12 +863,16 @@ Public Class frmConfig
 	    where v.Quantidade >= " + kgInicial + " and v.Quantidade <= " + kgFinal + "  and 
 	    data BETWEEN '" + Ini + "' AND '" + Fim + "'  group by v.Produto,p.Nome"
 
-        frmRelatorio.crtDatas = "Datas: " + Format(dtInicio.Value, "dd/MM/yyyy") + " - " + Format(dtFim.Value, "dd/MM/yyyy")
-        frmRelatorio.crtPesos = "Pesos: " + kgInicial + "Kg - " + kgFinal + "Kg"
+            frmRelatorio.crtDatas = "Datas: " + Format(dtInicio.Value, "dd/MM/yyyy") + " - " + Format(dtFim.Value, "dd/MM/yyyy")
+            frmRelatorio.crtPesos = "Pesos: " + kgInicial + "Kg - " + kgFinal + "Kg"
 
-        frmRelatorio.sSQLQuery = SQLQ
-        frmRelatorio.StringConexao = SQLControl.strConexao
-        frmRelatorio.Show()
+            frmRelatorio.sSQLQuery = SQLQ
+            frmRelatorio.StringConexao = SQLControl.strConexao
+            frmRelatorio.Show()
+        End If
+
+
+
     End Sub
 
     Private Sub txtInicioKG_TextChanged(sender As Object, e As EventArgs) Handles txtInicioKG.TextChanged

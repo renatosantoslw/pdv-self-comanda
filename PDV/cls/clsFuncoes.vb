@@ -1,6 +1,9 @@
 ﻿Imports System.Text
 Imports System.Data.SqlClient
 Imports System.IO
+Imports System
+Imports System.Data
+Imports Npgsql
 
 Public Class clsFuncoes
     Private Declare Auto Function GetPrivateProfileString Lib "Kernel32" (ByVal lpAppName As String, ByVal lpKeyName As String, ByVal lpDefault As String, ByVal lpReturnedString As StringBuilder, ByVal nSize As Integer, ByVal lpFileName As String) As Integer
@@ -39,7 +42,7 @@ Public Class clsFuncoes
 
         Dim nome_arquivo_ini As String = nomeArquivoINI()
 
-
+        Public strSistemaIntegrado = String.Empty
 
         'PORTA SERIAL
         Public strPortaCOM = String.Empty
@@ -118,6 +121,7 @@ Public Class clsFuncoes
 
         Public Sub GravaArquivoini()
 
+
             'CONEXAO
             WritePrivateProfileString("Conexao", "Servidor", strEnderecoServidor, nome_arquivo_ini)
             WritePrivateProfileString("Conexao", "NomeBancoDados", strNomeBanco, nome_arquivo_ini)
@@ -168,6 +172,10 @@ Public Class clsFuncoes
         End Sub
 
         Public Sub LerArquivoini()
+
+
+            strSistemaIntegrado = LeArquivoINI(nome_arquivo_ini, "Sistema", "Integracao", "Sismoura")
+
             'CONEXAO
             strEnderecoServidor = LeArquivoINI(nome_arquivo_ini, "Conexao", "Servidor", ".")
             strNomeBanco = LeArquivoINI(nome_arquivo_ini, "Conexao", "NomeBancoDados", "SISMOURA")
@@ -272,7 +280,14 @@ Public Class clsFuncoes
         Private strUsuarioBanco = String.Empty
         Private strSenhaBanco = String.Empty
         Public strConexao As String = String.Empty
+        Public strConexaoPostgres As String = String.Empty
         Private strInstrucao As String = String.Empty
+        Private strInstrucaoPostgres As String = String.Empty
+
+        Private objConexaoPostgres As New NpgsqlConnection()
+        Private objCommandPostgres As New NpgsqlCommand(strInstrucaoPostgres, objConexaoPostgres)
+        Private objDataReaderPostgres As NpgsqlDataReader
+        Private daPostgres As New NpgsqlDataAdapter(strInstrucaoPostgres, strConexaoPostgres)
 
         Private objConexao As New SqlConnection()
         Private objCommand As New SqlCommand(strInstrucao, objConexao)
@@ -361,8 +376,10 @@ Public Class clsFuncoes
             strUsuarioBanco = objParametro.strUsuarioBanco
             strSenhaBanco = objParametro.strSenhaBanco
             strConexao = "Data Source=" + strEnderecoServidor + ";Initial Catalog=" + strNomeBanco + ";User id=" + strUsuarioBanco + ";Password=" + strSenhaBanco + ";MultipleActiveResultSets=True;Connection Timeout=5"
+            strConexaoPostgres = "Host=" + strEnderecoServidor + ";Port=5432;Database=" + strNomeBanco + ";Username=" + strUsuarioBanco + ";Password=" + strSenhaBanco + ";Timeout=5;"
 
             objConexao.ConnectionString = strConexao
+            objConexaoPostgres.ConnectionString = strConexaoPostgres
         End Sub
 
         Public Function ConsultarProduto(ByVal Codigo_Produto As String, ByVal Produto As ProdutoObj, ByVal Formulario As String) As Boolean
@@ -408,6 +425,49 @@ Public Class clsFuncoes
 
         End Function
 
+        Public Function ConsultarProdutoPostgres(ByVal Id As String, ByVal Produto As ProdutoObj, ByVal Formulario As String) As Boolean
+
+            Try
+                If objConexaoPostgres.State = ConnectionState.Closed Then objConexaoPostgres.Open()
+                strInstrucaoPostgres = ("SELECT DISTINCT id,codigo_barras,descricao,unidade,valor_venda FROM public.produtos where id =  @Id")
+
+                objCommandPostgres.CommandText = strInstrucaoPostgres
+                objCommandPostgres.Connection = objConexaoPostgres
+                objCommandPostgres.Parameters.AddWithValue("@Id", Convert.ToInt32(Id))
+                objCommandPostgres.CommandType = CommandType.Text
+                objDataReaderPostgres = objCommandPostgres.ExecuteReader()
+                objDataReaderPostgres.Read()
+
+                If objDataReaderPostgres.HasRows Then
+                    Produto.Codigo = objDataReaderPostgres("id").ToString
+                    Produto.Nome = objDataReaderPostgres("descricao").ToString
+                    Produto.Unidade = objDataReaderPostgres("unidade").ToString
+                    Produto.Preco_Produto = objDataReaderPostgres("valor_venda").ToString
+                    objDataReaderPostgres.Close()
+                    Return True
+                Else
+                    Produto.Codigo = "0"
+                    Produto.Nome = "Objeto não localizado."
+                    Produto.Unidade = String.Empty
+                    Produto.Preco_Produto = String.Empty
+
+                    Return False
+                End If
+
+            Catch ex As Exception
+                Produto.Codigo = String.Empty
+                Produto.Nome = ex.Message.ToArray
+                Produto.Unidade = String.Empty
+                Produto.Preco_Produto = String.Empty
+                log.GerarLogErro(ex, Formulario, "Public Function ConsultarProdutoPostgres")
+                Return False
+            Finally
+                objCommandPostgres.Parameters.Clear()
+                objConexaoPostgres.Close()
+            End Try
+
+        End Function
+
         Function Testar_Conn(ByVal Formulario As String) As Boolean
             Try
                 objConexao.Open()
@@ -421,11 +481,25 @@ Public Class clsFuncoes
             End Try
         End Function
 
+        Function Testar_ConnPostgres(ByVal Formulario As String) As Boolean
+            Try
+                objConexaoPostgres.Open()
+                Return True
+            Catch ex As Exception
+
+                log.GerarLogErro(ex, Formulario, "Function Testar_Conn()Postgres")
+                Return False
+            Finally
+                objConexaoPostgres.Close()
+            End Try
+        End Function
+
         Function Testar_Conn_t(ByVal strEnderecoServidor_p As String,
-                             ByVal strNomeBanco_p As String,
-                             ByVal strUsuarioBanco_p As String,
-                             ByVal strSenhaBanco_p As String,
-                             ByVal Mensagem As MensagemObj, ByVal Formulario As String) As Boolean
+                               ByVal strNomeBanco_p As String,
+                               ByVal strUsuarioBanco_p As String,
+                               ByVal strSenhaBanco_p As String,
+                               ByVal Mensagem As MensagemObj,
+                               ByVal Formulario As String) As Boolean
 
             strEnderecoServidor = strEnderecoServidor_p
             strNomeBanco = strNomeBanco_p
@@ -445,6 +519,34 @@ Public Class clsFuncoes
                 '  MessageBox.Show(ex.Message.ToString, My.Application.Info.Title, MessageBoxButtons.OK, MessageBoxIcon.Information)
             Finally
                 objConexao.Close()
+            End Try
+        End Function
+
+        Function Testar_Conn_tPostgres(ByVal strEnderecoServidor_p As String,
+                                       ByVal strNomeBanco_p As String,
+                                       ByVal strUsuarioBanco_p As String,
+                                       ByVal strSenhaBanco_p As String,
+                                       ByVal Mensagem As MensagemObj,
+                                       ByVal Formulario As String) As Boolean
+
+            strEnderecoServidor = strEnderecoServidor_p
+            strNomeBanco = strNomeBanco_p
+            strUsuarioBanco = strUsuarioBanco_p
+            strSenhaBanco = strSenhaBanco_p
+            strConexaoPostgres = "Host=" + strEnderecoServidor + ";Port=5432;Database=" + strNomeBanco + ";Username=" + strUsuarioBanco + ";Password=" + strSenhaBanco + ";Timeout=5;"
+            objConexaoPostgres.ConnectionString = strConexaoPostgres
+
+            Try
+                objConexaoPostgres.Open()
+                Return True
+            Catch ex As Exception
+                Mensagem.Mensagem = ex.Message.ToString
+                log.GerarLogErro(ex, Formulario, "Function Testar_Conn_t()Postgres")
+
+                Return False
+                '  MessageBox.Show(ex.Message.ToString, My.Application.Info.Title, MessageBoxButtons.OK, MessageBoxIcon.Information)
+            Finally
+                objConexaoPostgres.Close()
             End Try
         End Function
 
@@ -497,6 +599,31 @@ Public Class clsFuncoes
             End Try
         End Function
 
+        Function GetCodigoUltimaComanda_ConfigPostgres(ByVal Formulario As String)
+            Try
+                Dim CodigoUltimaComanda As String = String.Empty
+                If objConexaoPostgres.State = ConnectionState.Closed Then objConexaoPostgres.Open()
+                strInstrucaoPostgres =
+            "
+                select max(Codigo_Ultima_Comanda+1) from Config_SelfComanda
+            "
+
+                objCommandPostgres.CommandText = strInstrucaoPostgres
+                objCommandPostgres.Connection = objConexaoPostgres
+                objCommandPostgres.CommandType = CommandType.Text
+                CodigoUltimaComanda = objCommandPostgres.ExecuteScalar
+                objCommandPostgres.Parameters.Clear()
+                objConexaoPostgres.Close()
+                UpdateGetCodigoUltimaComanda_ConfigPostgres()
+                Return CodigoUltimaComanda
+            Catch ex As Exception
+                log.GerarLogErro(ex, Formulario, "Function GetCodigoUltimaComanda()Postgres")
+                Return 0
+            Finally
+                objConexaoPostgres.Close()
+            End Try
+        End Function
+
         Private Sub UpdateGetCodigoUltimaComanda_Config()
             Try
 
@@ -521,6 +648,30 @@ Public Class clsFuncoes
             End Try
         End Sub
 
+        Private Sub UpdateGetCodigoUltimaComanda_ConfigPostgres()
+            Try
+
+                If objConexaoPostgres.State = ConnectionState.Closed Then objConexaoPostgres.Open()
+                strInstrucaoPostgres =
+            "
+                Update Config_SelfComanda set Codigo_Ultima_Comanda = Codigo_Ultima_Comanda + 1
+            "
+
+                objCommandPostgres.CommandText = strInstrucaoPostgres
+                objCommandPostgres.Connection = objConexaoPostgres
+                objCommandPostgres.CommandType = CommandType.Text
+                objCommandPostgres.ExecuteNonQuery()
+                objCommandPostgres.Parameters.Clear()
+                objConexaoPostgres.Close()
+
+            Catch ex As Exception
+                log.GerarLogErro(ex, "UpdateGetCodigoUltimaComanda_Config()", "Function GetCodigoUltimaComanda()Postgres")
+
+            Finally
+                objConexaoPostgres.Close()
+            End Try
+        End Sub
+
         Public Sub UpdateGetCodigoUltimaComanda_Zerar()
             Try
 
@@ -542,6 +693,30 @@ Public Class clsFuncoes
 
             Finally
                 objConexao.Close()
+            End Try
+        End Sub
+
+        Public Sub UpdateGetCodigoUltimaComanda_ZerarPostgres()
+            Try
+
+                If objConexaoPostgres.State = ConnectionState.Closed Then objConexaoPostgres.Open()
+                strInstrucaoPostgres =
+            "
+                Update Config_SelfComanda set Codigo_Ultima_Comanda =0
+            "
+
+                objCommandPostgres.CommandText = strInstrucaoPostgres
+                objCommandPostgres.Connection = objConexaoPostgres
+                objCommandPostgres.CommandType = CommandType.Text
+                objCommandPostgres.ExecuteNonQuery()
+                objCommandPostgres.Parameters.Clear()
+                objConexaoPostgres.Close()
+                MessageBox.Show("Comandas zeradas com sucesso", My.Application.Info.Title, MessageBoxButtons.OK, MessageBoxIcon.Information)
+            Catch ex As Exception
+                log.GerarLogErro(ex, "frmConfig", "UpdateGetCodigoUltimaComanda_Zerar()Postgres")
+
+            Finally
+                objConexaoPostgres.Close()
             End Try
         End Sub
 
@@ -570,34 +745,34 @@ Public Class clsFuncoes
         End Function
 
         Function InserirComanda(ByVal strCodProduto_p As String,
-                                  ByVal strCodEmpresa_p As String,
-                                  ByVal strCodDeposito_p As String,
-                                  ByVal strCodVendedor_p As String,
-                                  ByVal strQuantidade_p As String,
-                                  ByVal strUnitario_p As String,
-                                  ByVal strTotal_p As String,
-                                  ByVal strDiaHoraMinuto_p As String,
-                                  ByVal strCodMesa_p As String) As Boolean
+                                ByVal strCodEmpresa_p As String,
+                                ByVal strCodDeposito_p As String,
+                                ByVal strCodVendedor_p As String,
+                                ByVal strQuantidade_p As String,
+                                ByVal strUnitario_p As String,
+                                ByVal strTotal_p As String,
+                                ByVal strDiaHoraMinuto_p As String,
+                                ByVal strCodMesa_p As String) As Boolean
 
             Dim strDiaHoraMinuto As String = strDiaHoraMinuto_p
 
             Try
                 strInstrucao =
-            "
-             INSERT INTO Venda_Espera(Item, Codigo,Mesa, Empresa, Data, Produto, Quantidade,Unitario, Total, Cancelado, Vendedor, Deposito)          
-             SELECT (SELECT ISNULL(MAX(Item),0)+1 FROM Venda_Espera WHERE Codigo=@strDiaHoraMinuto) AS Item,
-            @strDiaHoraMinuto,
-            @strCodMesa,
-            @strCodEmpresa_p,
-            GetDate(),
-            @strCodProduto_p,
-            @strQuantidade_p,
-            @strUnitario_p,
-            @strTotal_p,
-            'N',
-            @strCodVendedor_p,
-            @strCodDeposito_p
-            "
+                "
+                 INSERT INTO Venda_Espera(Item, Codigo,Mesa, Empresa, Data, Produto, Quantidade,Unitario, Total, Cancelado, Vendedor, Deposito)          
+                 SELECT (SELECT ISNULL(MAX(Item),0)+1 FROM Venda_Espera WHERE Codigo=@strDiaHoraMinuto) AS Item,
+                 @strDiaHoraMinuto,
+                 @strCodMesa,
+                 @strCodEmpresa_p,
+                 GetDate(),
+                 @strCodProduto_p,
+                 @strQuantidade_p,
+                 @strUnitario_p,
+                 @strTotal_p,
+                 'N',
+                 @strCodVendedor_p,
+                 @strCodDeposito_p
+                "
 
                 objCommand.CommandText = strInstrucao
                 objCommand.Connection = objConexao
@@ -634,6 +809,285 @@ Public Class clsFuncoes
             Finally
                 objCommand.Parameters.Clear()
                 objConexao.Close()
+            End Try
+
+        End Function
+
+        Function InserirComandaPostgres(ByVal strCodProduto_p As String,
+                                        ByVal strCodEmpresa_p As String,
+                                        ByVal strCodDeposito_p As String,
+                                        ByVal strCodVendedor_p As String,
+                                        ByVal strQuantidade_p As String,
+                                        ByVal strUnitario_p As String,
+                                        ByVal strTotal_p As String,
+                                        ByVal strDiaHoraMinuto_p As String,
+                                        ByVal strCodMesa_p As String) As Boolean
+
+            Dim strDiaHoraMinuto As String = strDiaHoraMinuto_p
+
+            objConexaoPostgres.Open()
+            ' Início da transação para garantir atomicidade
+            Dim transaction As NpgsqlTransaction = objConexaoPostgres.BeginTransaction()
+
+            Try
+                objCommandPostgres.Transaction = transaction
+
+                strInstrucaoPostgres =
+                "
+                        INSERT INTO public.almocos
+                        (
+                        sequencia_diaria,
+                        natureza,
+                        identificacao,
+                        mesa,
+                        complemento_identificador,
+                        codigo_referencial_pessoa,
+                        codigo_referencial,
+                        data,
+                        cancelado,
+                        enviado,
+                        pago,
+                        fechado,
+                        imprimir_resumo_fechamento,
+                        delivery,
+                        complemento_delivery,
+                        levar_maquina_cartao,
+                        levar_troco_para,
+                        observacao,
+                        hora,
+                        troco,
+                        valor_informado,
+                        usuario_id,
+                        modelo,
+                        xml,
+                        numero_pessoas,
+                        status_nota,
+                        nome_nota_fiscal,
+                        cpf_nota_fiscal,
+                        mensagem_retorno,
+                        detalhe_retorno,
+                        codigo_referencial_pessoa_entregador,
+                        hora_saida_entrega,
+                        hora_retorno_entrega,
+                        chave,
+                        tipo_emissao,
+                        tipo_pedido,
+                        tipo_importacao,
+                        bandeira,
+                        numero_pre_venda_dj,
+                        numero_nota_fiscal,
+                        serie_nota_fiscal,
+                        retirar_no_local
+                        )
+                        VALUES 
+                        (
+                        @sequencia_diaria,
+                        @natureza,
+                        @identificacao,
+                        @mesa,
+                        @complemento_identificador,
+                        @codigo_referencial_pessoa,
+                        @codigo_referencial,
+                        @data,
+                        @cancelado,
+                        @enviado,
+                        @pago,
+                        @fechado,
+                        @imprimir_resumo_fechamento,
+                        @delivery,
+                        @complemento_delivery,
+                        @levar_maquina_cartao,
+                        @levar_troco_para,
+                        @observacao,
+                        @hora,
+                        @troco,
+                        @valor_informado,
+                        @usuario_id,
+                        @modelo,
+                        @xml,
+                        @numero_pessoas,
+                        @status_nota,
+                        @nome_nota_fiscal,
+                        @cpf_nota_fiscal,
+                        @mensagem_retorno,
+                        @detalhe_retorno,
+                        @codigo_referencial_pessoa_entregador,
+                        @hora_saida_entrega,
+                        @hora_retorno_entrega,
+                        @chave,
+                        @tipo_emissao,
+                        @tipo_pedido,
+                        @tipo_importacao,
+                        @bandeira,
+                        @numero_pre_venda_dj,
+                        @numero_nota_fiscal,
+                        @serie_nota_fiscal,
+                        @retirar_no_local
+                        ) RETURNING id;                   
+                "
+
+                objCommandPostgres.CommandText = strInstrucaoPostgres
+                objCommandPostgres.Connection = objConexaoPostgres
+
+                objCommandPostgres.Parameters.Clear()
+
+                objCommandPostgres.Parameters.AddWithValue("@sequencia_diaria", Convert.ToInt32(strDiaHoraMinuto)) 'Numero comanda
+                objCommandPostgres.Parameters.AddWithValue("@natureza", "S")
+                objCommandPostgres.Parameters.AddWithValue("@identificacao", Convert.ToInt32(strDiaHoraMinuto)) 'Numero comanda             
+                objCommandPostgres.Parameters.AddWithValue("@complemento_identificador", DBNull.Value)
+                objCommandPostgres.Parameters.AddWithValue("@codigo_referencial_pessoa", DBNull.Value)
+                objCommandPostgres.Parameters.AddWithValue("@codigo_referencial", "PDVSELFCOMANDA")
+                objCommandPostgres.Parameters.AddWithValue("@data", DateTime.Now.Date)
+                objCommandPostgres.Parameters.AddWithValue("@cancelado", False)
+                objCommandPostgres.Parameters.AddWithValue("@enviado", False)
+                objCommandPostgres.Parameters.AddWithValue("@pago", False)
+                objCommandPostgres.Parameters.AddWithValue("@fechado", False)
+                objCommandPostgres.Parameters.AddWithValue("@imprimir_resumo_fechamento", False)
+                objCommandPostgres.Parameters.AddWithValue("@delivery", False)
+                objCommandPostgres.Parameters.AddWithValue("@complemento_delivery", DBNull.Value)
+                objCommandPostgres.Parameters.AddWithValue("@levar_maquina_cartao", False)
+                objCommandPostgres.Parameters.AddWithValue("@levar_troco_para", 0.00D)
+                objCommandPostgres.Parameters.AddWithValue("@observacao", "Gerado pelo autoatendimento")
+                objCommandPostgres.Parameters.AddWithValue("@hora", DateTime.Now)
+                objCommandPostgres.Parameters.AddWithValue("@troco", 0.00D)
+                objCommandPostgres.Parameters.AddWithValue("@valor_informado", 0.00D)
+                objCommandPostgres.Parameters.AddWithValue("@usuario_id", 0)
+                objCommandPostgres.Parameters.AddWithValue("@modelo", DBNull.Value)
+                objCommandPostgres.Parameters.AddWithValue("@xml", DBNull.Value)
+                objCommandPostgres.Parameters.AddWithValue("@numero_pessoas", 1)
+                objCommandPostgres.Parameters.AddWithValue("@status_nota", DBNull.Value)
+                objCommandPostgres.Parameters.AddWithValue("@nome_nota_fiscal", DBNull.Value)
+                objCommandPostgres.Parameters.AddWithValue("@cpf_nota_fiscal", DBNull.Value)
+                objCommandPostgres.Parameters.AddWithValue("@mensagem_retorno", DBNull.Value)
+                objCommandPostgres.Parameters.AddWithValue("@detalhe_retorno", DBNull.Value)
+                objCommandPostgres.Parameters.AddWithValue("@codigo_referencial_pessoa_entregador", DBNull.Value)
+                objCommandPostgres.Parameters.AddWithValue("@hora_saida_entrega", DBNull.Value)
+                objCommandPostgres.Parameters.AddWithValue("@hora_retorno_entrega", DBNull.Value)
+                objCommandPostgres.Parameters.AddWithValue("@chave", DBNull.Value)
+                objCommandPostgres.Parameters.AddWithValue("@tipo_emissao", 1)
+                objCommandPostgres.Parameters.AddWithValue("@tipo_pedido", "AUTO_ATENDIMENTO_BALANCA")
+                objCommandPostgres.Parameters.AddWithValue("@tipo_importacao", "SC")
+                objCommandPostgres.Parameters.AddWithValue("@bandeira", DBNull.Value)
+                objCommandPostgres.Parameters.AddWithValue("@numero_pre_venda_dj", DBNull.Value)
+                objCommandPostgres.Parameters.AddWithValue("@numero_nota_fiscal", DBNull.Value)
+                objCommandPostgres.Parameters.AddWithValue("@serie_nota_fiscal", DBNull.Value)
+                objCommandPostgres.Parameters.AddWithValue("@retirar_no_local", False)
+
+                If strCodMesa_p = "" Or strCodMesa_p = String.Empty Then
+                    objCommandPostgres.Parameters.AddWithValue("@mesa", DBNull.Value)
+                Else
+                    objCommandPostgres.Parameters.AddWithValue("@mesa", Convert.ToInt32(strCodMesa_p))
+                End If
+
+                Dim idGerado As Integer = Convert.ToInt32(objCommandPostgres.ExecuteScalar())
+
+                ' Segundo INSERT usando o ID gerado
+                strInstrucaoPostgres =
+                    "
+                        INSERT INTO public.almoco_produtos 
+                        (
+                        almoco_id,
+                        produto_id, 
+                        quantidade,
+                        valor_unitario,
+                        valor_original,
+                        desconto,
+                        valor_total,
+                        status,
+                        almoco_produtos_id,
+                        pago,
+                        vale_impresso,
+                        hora,
+                        hora_notificacao,
+                        hora_producao,
+                        hora_conclusao_producao,
+                        hora_entregue,
+                        id_usuario_producao,
+                        usuario_id,
+                        ordem,
+                        nome_cliente,
+                        sequencia_producao,
+                        tipo_pedido,
+                        descricao_produto,
+                        codigo_referencial
+                        )
+                        VALUES 
+                        (
+                        @almoco_id,
+                        @produto_id, 
+                        @quantidade,
+                        @valor_unitario,
+                        @valor_original,
+                        @desconto,
+                        @valor_total,
+                        @status,
+                        @almoco_produtos_id,
+                        @pago,
+                        @vale_impresso,
+                        @hora,
+                        @hora_notificacao,
+                        @hora_producao,
+                        @hora_conclusao_producao,
+                        @hora_entregue,
+                        @id_usuario_producao,
+                        @usuario_id,
+                        @ordem,
+                        @nome_cliente,
+                        @sequencia_producao,
+                        @tipo_pedido,
+                        @descricao_produto,
+                        @codigo_referencial
+                        )
+                    "
+
+                objCommandPostgres.CommandText = strInstrucaoPostgres
+
+                objCommandPostgres.Parameters.Clear()
+
+                objCommandPostgres.Parameters.AddWithValue("@almoco_id", idGerado)
+                objCommandPostgres.Parameters.AddWithValue("@produto_id", Convert.ToInt32(strCodProduto_p))
+                objCommandPostgres.Parameters.AddWithValue("@quantidade", Convert.ToDecimal(strQuantidade_p))
+                objCommandPostgres.Parameters.AddWithValue("@valor_unitario", Convert.ToDecimal(strUnitario_p))
+                objCommandPostgres.Parameters.AddWithValue("@valor_original", Convert.ToDecimal(strUnitario_p))
+                objCommandPostgres.Parameters.AddWithValue("@desconto", 0)
+                objCommandPostgres.Parameters.AddWithValue("@valor_total", Convert.ToDecimal(strTotal_p))
+                objCommandPostgres.Parameters.AddWithValue("@status", "F")
+                objCommandPostgres.Parameters.AddWithValue("@almoco_produtos_id", DBNull.Value)
+                objCommandPostgres.Parameters.AddWithValue("@pago", False)
+                objCommandPostgres.Parameters.AddWithValue("@vale_impresso", False)
+                objCommandPostgres.Parameters.AddWithValue("@hora", DateTime.Now)
+                objCommandPostgres.Parameters.AddWithValue("@hora_notificacao", DBNull.Value)
+                objCommandPostgres.Parameters.AddWithValue("@hora_producao", DBNull.Value)
+                objCommandPostgres.Parameters.AddWithValue("@hora_conclusao_producao", DBNull.Value)
+                objCommandPostgres.Parameters.AddWithValue("@hora_entregue", DBNull.Value)
+                objCommandPostgres.Parameters.AddWithValue("@id_usuario_producao", DBNull.Value)
+                objCommandPostgres.Parameters.AddWithValue("@usuario_id", 18161)
+                objCommandPostgres.Parameters.AddWithValue("@ordem", DBNull.Value)
+                objCommandPostgres.Parameters.AddWithValue("@nome_cliente", DBNull.Value)
+                objCommandPostgres.Parameters.AddWithValue("@sequencia_producao", DBNull.Value)
+                objCommandPostgres.Parameters.AddWithValue("@tipo_pedido", DBNull.Value)
+                objCommandPostgres.Parameters.AddWithValue("@descricao_produto", DBNull.Value)
+                objCommandPostgres.Parameters.AddWithValue("@codigo_referencial", DBNull.Value)
+
+                objCommandPostgres.ExecuteNonQuery()
+                transaction.Commit()
+
+                Return True
+
+            Catch ex As Exception
+                MessageBox.Show(ex.Message,
+                                Application.CompanyName,
+                                MessageBoxButtons.OK,
+                                MessageBoxIcon.Information)
+                log.GerarLogErro(ex, "frmPdvVenda", "Function InserirComandaPostgres")
+
+                transaction.Rollback()
+                Return False
+
+            Finally
+                objCommandPostgres.Parameters.Clear()
+                transaction.Dispose()
+                objConexaoPostgres.Close()
             End Try
 
         End Function
@@ -706,6 +1160,80 @@ Public Class clsFuncoes
             End Try
 
         End Function
+
+        Function InserirComanda_sPostgres(ByVal strCodProduto_p As String,
+                                  ByVal strCodEmpresa_p As String,
+                                  ByVal strCodDeposito_p As String,
+                                  ByVal strCodVendedor_p As String,
+                                  ByVal strQuantidade_p As String,
+                                  ByVal strUnitario_p As String,
+                                  ByVal strTotal_p As String,
+                                  ByVal strDiaHoraMinuto_p As String,
+                                  ByVal strCodMesa_p As String) As Boolean
+
+            Dim strDiaHoraMinuto As String = strDiaHoraMinuto_p
+
+            Try
+                strInstrucaoPostgres =
+            "
+INSERT INTO Venda_Espera_SelfComanda (
+    Item, Codigo, Mesa, Empresa, Data, Produto, Quantidade, Unitario, Total, Cancelado, Vendedor, Deposito
+)
+    SELECT COALESCE(MAX(Item), 0) + 1, 
+    @strDiaHoraMinuto,
+    @strCodMesa,
+    @strCodEmpresa_p,
+    NOW(),
+    @strCodProduto_p,
+    @strQuantidade_p,
+    @strUnitario_p,
+    @strTotal_p,
+    'N',
+    @strCodVendedor_p,
+    @strCodDeposito_p
+    FROM Venda_Espera_SelfComanda 
+
+            "
+
+                objCommandPostgres.CommandText = strInstrucaoPostgres
+                objCommandPostgres.Connection = objConexaoPostgres
+
+                objCommandPostgres.Parameters.AddWithValue("@strDiaHoraMinuto", strDiaHoraMinuto)
+                objCommandPostgres.Parameters.AddWithValue("@strCodProduto_p", Convert.ToInt32(strCodProduto_p))
+                objCommandPostgres.Parameters.AddWithValue("@strCodEmpresa_p", Convert.ToInt32(strCodEmpresa_p))
+                objCommandPostgres.Parameters.AddWithValue("@strCodDeposito_p",Convert.ToInt32(strCodDeposito_p))
+                objCommandPostgres.Parameters.AddWithValue("@strCodVendedor_p",Convert.ToInt32(strCodVendedor_p))
+                objCommandPostgres.Parameters.AddWithValue("@strQuantidade_p", Convert.ToDecimal(strQuantidade_p))
+                objCommandPostgres.Parameters.AddWithValue("@strUnitario_p", Convert.ToDecimal(strUnitario_p))
+                objCommandPostgres.Parameters.AddWithValue("@strTotal_p", Convert.ToDecimal(strTotal_p))
+
+                If strCodMesa_p = "" Or strCodMesa_p = String.Empty Then
+                    objCommandPostgres.Parameters.AddWithValue("@strCodMesa", DBNull.Value)
+                Else
+                    objCommandPostgres.Parameters.AddWithValue("@strCodMesa", Convert.ToInt32(strCodMesa_p))
+                End If
+
+
+                objConexaoPostgres.Open()
+                objCommandPostgres.ExecuteNonQuery()
+                Return True
+
+            Catch ex As Exception
+                MessageBox.Show(ex.Message,
+                                Application.CompanyName,
+                                MessageBoxButtons.OK,
+                                MessageBoxIcon.Information)
+                log.GerarLogErro(ex, "frmPdvVenda", "Function InserirComanda_sPostgres")
+
+                Return False
+
+            Finally
+                objCommandPostgres.Parameters.Clear()
+                objConexaoPostgres.Close()
+            End Try
+
+        End Function
+
 
         Function Verifica_Empresa(ByVal strRazaoEmpresa As String) As Boolean
 

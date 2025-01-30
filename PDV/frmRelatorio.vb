@@ -2,6 +2,7 @@
 Imports System.IO
 Imports CrystalDecisions.CrystalReports.Engine
 Imports CrystalDecisions.Shared
+Imports Npgsql
 
 Public Class frmRelatorio
     'Dim CaminhoRelatorioRPT As String = Application.StartupPath + "\rptRelatorio.rpt"
@@ -28,8 +29,12 @@ Public Class frmRelatorio
     Private Sub frmRelatorio_Load(sender As Object, e As EventArgs) Handles MyBase.Load
 
 
-        Dim SQLCon As SqlConnection = New SqlConnection(StringConexao)
-        Dim da As New SqlDataAdapter(sSQLQuery, SQLCon)
+        'Dim SQLCon As SqlConnection = New SqlConnection(StringConexao)
+        'Dim da As New SqlDataAdapter(sSQLQuery, SQLCon)
+        'Dim ds As New dsImpressao
+
+        Dim SQLCon As NpgsqlConnection = New NpgsqlConnection(StringConexao)
+        Dim da As New NpgsqlDataAdapter(sSQLQuery, SQLCon)
         Dim ds As New dsImpressao
 
         Try

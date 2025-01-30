@@ -62,7 +62,7 @@ Public Class frmPrincipal
     'LOAD
     Private Sub frmPrincipal_Load(sender As Object, e As EventArgs) Handles MyBase.Load
 
-        Me.Text = "PDVSelfComanda Add-in - Build: 15/04/2024 :: 21:52"
+        Me.Text = "PDVSelfComanda Add-in - Build: 29/01/2025 :: 11:11"
         Me.FormBorderStyle = FormBorderStyle.None
         'Me.FormBorderStyle = FormBorderStyle.Sizable
         'Me.WindowState = FormWindowState.Normal

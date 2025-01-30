@@ -61,7 +61,7 @@ Partial Class frmPdvVenda
         Me.SplitContainer1.BackColor = System.Drawing.Color.FromArgb(CType(CType(46, Byte), Integer), CType(CType(46, Byte), Integer), CType(CType(62, Byte), Integer))
         Me.SplitContainer1.Dock = System.Windows.Forms.DockStyle.Fill
         Me.SplitContainer1.Location = New System.Drawing.Point(0, 0)
-        Me.SplitContainer1.Margin = New System.Windows.Forms.Padding(2, 2, 2, 2)
+        Me.SplitContainer1.Margin = New System.Windows.Forms.Padding(3, 2, 3, 2)
         Me.SplitContainer1.Name = "SplitContainer1"
         '
         'SplitContainer1.Panel1
@@ -73,9 +73,8 @@ Partial Class frmPdvVenda
         Me.SplitContainer1.Panel2.Controls.Add(Me.lblComandaAtiva)
         Me.SplitContainer1.Panel2.Controls.Add(Me.picEstado)
         Me.SplitContainer1.Panel2.Controls.Add(Me.txtCodBarra)
-        Me.SplitContainer1.Size = New System.Drawing.Size(1040, 640)
-        Me.SplitContainer1.SplitterDistance = 396
-        Me.SplitContainer1.SplitterWidth = 3
+        Me.SplitContainer1.Size = New System.Drawing.Size(1387, 788)
+        Me.SplitContainer1.SplitterDistance = 528
         Me.SplitContainer1.TabIndex = 1
         Me.SplitContainer1.Visible = False
         '
@@ -84,7 +83,7 @@ Partial Class frmPdvVenda
         Me.SplitContainer2.BackColor = System.Drawing.Color.FromArgb(CType(CType(46, Byte), Integer), CType(CType(46, Byte), Integer), CType(CType(62, Byte), Integer))
         Me.SplitContainer2.Dock = System.Windows.Forms.DockStyle.Fill
         Me.SplitContainer2.Location = New System.Drawing.Point(0, 0)
-        Me.SplitContainer2.Margin = New System.Windows.Forms.Padding(2, 2, 2, 2)
+        Me.SplitContainer2.Margin = New System.Windows.Forms.Padding(3, 2, 3, 2)
         Me.SplitContainer2.Name = "SplitContainer2"
         Me.SplitContainer2.Orientation = System.Windows.Forms.Orientation.Horizontal
         '
@@ -96,9 +95,8 @@ Partial Class frmPdvVenda
         '
         Me.SplitContainer2.Panel2.Controls.Add(Me.lblNomeProduto)
         Me.SplitContainer2.Panel2.Controls.Add(Me.Panel1)
-        Me.SplitContainer2.Size = New System.Drawing.Size(396, 640)
-        Me.SplitContainer2.SplitterDistance = 335
-        Me.SplitContainer2.SplitterWidth = 3
+        Me.SplitContainer2.Size = New System.Drawing.Size(528, 788)
+        Me.SplitContainer2.SplitterDistance = 412
         Me.SplitContainer2.TabIndex = 2
         Me.SplitContainer2.TabStop = False
         Me.SplitContainer2.Visible = False
@@ -108,9 +106,9 @@ Partial Class frmPdvVenda
         Me.picLogo.Dock = System.Windows.Forms.DockStyle.Fill
         Me.picLogo.Image = Global.PDV.My.Resources.Resources.PESE
         Me.picLogo.Location = New System.Drawing.Point(0, 0)
-        Me.picLogo.Margin = New System.Windows.Forms.Padding(2, 2, 2, 2)
+        Me.picLogo.Margin = New System.Windows.Forms.Padding(3, 2, 3, 2)
         Me.picLogo.Name = "picLogo"
-        Me.picLogo.Size = New System.Drawing.Size(396, 335)
+        Me.picLogo.Size = New System.Drawing.Size(528, 412)
         Me.picLogo.SizeMode = System.Windows.Forms.PictureBoxSizeMode.StretchImage
         Me.picLogo.TabIndex = 1
         Me.picLogo.TabStop = False
@@ -122,15 +120,16 @@ Partial Class frmPdvVenda
             Or System.Windows.Forms.AnchorStyles.Right), System.Windows.Forms.AnchorStyles)
         Me.lblNomeProduto.AutoEllipsis = True
         Me.lblNomeProduto.DisabledLinkColor = System.Drawing.Color.FromArgb(CType(CType(46, Byte), Integer), CType(CType(46, Byte), Integer), CType(CType(62, Byte), Integer))
-        Me.lblNomeProduto.Font = New System.Drawing.Font("Microsoft Sans Serif", 21.75!, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, CType(0, Byte))
+        Me.lblNomeProduto.Font = New System.Drawing.Font("Microsoft Sans Serif", 22.2!, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, CType(0, Byte))
         Me.lblNomeProduto.ForeColor = System.Drawing.SystemColors.ControlText
         Me.lblNomeProduto.LinkColor = System.Drawing.Color.LightSkyBlue
-        Me.lblNomeProduto.Location = New System.Drawing.Point(6, 228)
+        Me.lblNomeProduto.Location = New System.Drawing.Point(3, 277)
+        Me.lblNomeProduto.Margin = New System.Windows.Forms.Padding(4, 0, 4, 0)
         Me.lblNomeProduto.Name = "lblNomeProduto"
-        Me.lblNomeProduto.Size = New System.Drawing.Size(373, 39)
+        Me.lblNomeProduto.Size = New System.Drawing.Size(521, 91)
         Me.lblNomeProduto.TabIndex = 1
         Me.lblNomeProduto.TabStop = True
-        Me.lblNomeProduto.Text = "Nome produto R$ UN - EX:"
+        Me.lblNomeProduto.Text = "Nome produto R$ UN - EX: TESTE NOME"
         '
         'Panel1
         '
@@ -140,9 +139,9 @@ Partial Class frmPdvVenda
         Me.Panel1.Controls.Add(Me.Panel2)
         Me.Panel1.Dock = System.Windows.Forms.DockStyle.Top
         Me.Panel1.Location = New System.Drawing.Point(0, 0)
-        Me.Panel1.Margin = New System.Windows.Forms.Padding(2, 2, 2, 2)
+        Me.Panel1.Margin = New System.Windows.Forms.Padding(3, 2, 3, 2)
         Me.Panel1.Name = "Panel1"
-        Me.Panel1.Size = New System.Drawing.Size(396, 223)
+        Me.Panel1.Size = New System.Drawing.Size(528, 274)
         Me.Panel1.TabIndex = 0
         '
         'Panel3
@@ -150,9 +149,10 @@ Partial Class frmPdvVenda
         Me.Panel3.Controls.Add(Me.lblTotalRS)
         Me.Panel3.Controls.Add(Me.picValorTotal)
         Me.Panel3.Dock = System.Windows.Forms.DockStyle.Top
-        Me.Panel3.Location = New System.Drawing.Point(0, 113)
+        Me.Panel3.Location = New System.Drawing.Point(0, 139)
+        Me.Panel3.Margin = New System.Windows.Forms.Padding(4)
         Me.Panel3.Name = "Panel3"
-        Me.Panel3.Size = New System.Drawing.Size(396, 110)
+        Me.Panel3.Size = New System.Drawing.Size(528, 135)
         Me.Panel3.TabIndex = 1
         '
         'lblTotalRS
@@ -163,10 +163,9 @@ Partial Class frmPdvVenda
         Me.lblTotalRS.BackColor = System.Drawing.Color.Black
         Me.lblTotalRS.Font = New System.Drawing.Font("Calibri", 40.0!, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, CType(0, Byte))
         Me.lblTotalRS.ForeColor = System.Drawing.Color.White
-        Me.lblTotalRS.Location = New System.Drawing.Point(27, 37)
-        Me.lblTotalRS.Margin = New System.Windows.Forms.Padding(2, 0, 2, 0)
+        Me.lblTotalRS.Location = New System.Drawing.Point(36, 46)
         Me.lblTotalRS.Name = "lblTotalRS"
-        Me.lblTotalRS.Size = New System.Drawing.Size(300, 59)
+        Me.lblTotalRS.Size = New System.Drawing.Size(400, 73)
         Me.lblTotalRS.TabIndex = 5
         Me.lblTotalRS.Text = "0,00"
         '
@@ -175,9 +174,9 @@ Partial Class frmPdvVenda
         Me.picValorTotal.Dock = System.Windows.Forms.DockStyle.Bottom
         Me.picValorTotal.Image = Global.PDV.My.Resources.Resources.TOTAL
         Me.picValorTotal.Location = New System.Drawing.Point(0, 1)
-        Me.picValorTotal.Margin = New System.Windows.Forms.Padding(2, 2, 2, 2)
+        Me.picValorTotal.Margin = New System.Windows.Forms.Padding(3, 2, 3, 2)
         Me.picValorTotal.Name = "picValorTotal"
-        Me.picValorTotal.Size = New System.Drawing.Size(396, 109)
+        Me.picValorTotal.Size = New System.Drawing.Size(528, 134)
         Me.picValorTotal.SizeMode = System.Windows.Forms.PictureBoxSizeMode.StretchImage
         Me.picValorTotal.TabIndex = 3
         Me.picValorTotal.TabStop = False
@@ -188,8 +187,9 @@ Partial Class frmPdvVenda
         Me.Panel2.Controls.Add(Me.picPeso)
         Me.Panel2.Dock = System.Windows.Forms.DockStyle.Top
         Me.Panel2.Location = New System.Drawing.Point(0, 0)
+        Me.Panel2.Margin = New System.Windows.Forms.Padding(4)
         Me.Panel2.Name = "Panel2"
-        Me.Panel2.Size = New System.Drawing.Size(396, 113)
+        Me.Panel2.Size = New System.Drawing.Size(528, 139)
         Me.Panel2.TabIndex = 0
         '
         'lblPesoKG
@@ -200,10 +200,9 @@ Partial Class frmPdvVenda
         Me.lblPesoKG.BackColor = System.Drawing.Color.Black
         Me.lblPesoKG.Font = New System.Drawing.Font("Calibri", 40.0!, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, CType(0, Byte))
         Me.lblPesoKG.ForeColor = System.Drawing.Color.White
-        Me.lblPesoKG.Location = New System.Drawing.Point(27, 40)
-        Me.lblPesoKG.Margin = New System.Windows.Forms.Padding(2, 0, 2, 0)
+        Me.lblPesoKG.Location = New System.Drawing.Point(36, 49)
         Me.lblPesoKG.Name = "lblPesoKG"
-        Me.lblPesoKG.Size = New System.Drawing.Size(300, 59)
+        Me.lblPesoKG.Size = New System.Drawing.Size(400, 73)
         Me.lblPesoKG.TabIndex = 4
         Me.lblPesoKG.Text = "0,000"
         '
@@ -212,9 +211,9 @@ Partial Class frmPdvVenda
         Me.picPeso.Dock = System.Windows.Forms.DockStyle.Bottom
         Me.picPeso.Image = Global.PDV.My.Resources.Resources.PESO
         Me.picPeso.Location = New System.Drawing.Point(0, 0)
-        Me.picPeso.Margin = New System.Windows.Forms.Padding(2, 2, 2, 2)
+        Me.picPeso.Margin = New System.Windows.Forms.Padding(3, 2, 3, 2)
         Me.picPeso.Name = "picPeso"
-        Me.picPeso.Size = New System.Drawing.Size(396, 113)
+        Me.picPeso.Size = New System.Drawing.Size(528, 139)
         Me.picPeso.SizeMode = System.Windows.Forms.PictureBoxSizeMode.StretchImage
         Me.picPeso.TabIndex = 2
         Me.picPeso.TabStop = False
@@ -227,10 +226,9 @@ Partial Class frmPdvVenda
         Me.lblComandaAtiva.BackColor = System.Drawing.Color.Black
         Me.lblComandaAtiva.Font = New System.Drawing.Font("Calibri", 26.25!, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, CType(0, Byte))
         Me.lblComandaAtiva.ForeColor = System.Drawing.Color.White
-        Me.lblComandaAtiva.Location = New System.Drawing.Point(42, 39)
-        Me.lblComandaAtiva.Margin = New System.Windows.Forms.Padding(2, 0, 2, 0)
+        Me.lblComandaAtiva.Location = New System.Drawing.Point(56, 48)
         Me.lblComandaAtiva.Name = "lblComandaAtiva"
-        Me.lblComandaAtiva.Size = New System.Drawing.Size(247, 42)
+        Me.lblComandaAtiva.Size = New System.Drawing.Size(314, 54)
         Me.lblComandaAtiva.TabIndex = 5
         Me.lblComandaAtiva.Text = "Comanda Ativa:"
         Me.lblComandaAtiva.TextAlign = System.Drawing.ContentAlignment.MiddleLeft
@@ -242,9 +240,9 @@ Partial Class frmPdvVenda
         Me.picEstado.Dock = System.Windows.Forms.DockStyle.Fill
         Me.picEstado.Image = Global.PDV.My.Resources.Resources.COLOQUE
         Me.picEstado.Location = New System.Drawing.Point(0, 0)
-        Me.picEstado.Margin = New System.Windows.Forms.Padding(2, 2, 2, 2)
+        Me.picEstado.Margin = New System.Windows.Forms.Padding(3, 2, 3, 2)
         Me.picEstado.Name = "picEstado"
-        Me.picEstado.Size = New System.Drawing.Size(641, 640)
+        Me.picEstado.Size = New System.Drawing.Size(855, 788)
         Me.picEstado.SizeMode = System.Windows.Forms.PictureBoxSizeMode.StretchImage
         Me.picEstado.TabIndex = 2
         Me.picEstado.TabStop = False
@@ -254,10 +252,11 @@ Partial Class frmPdvVenda
         Me.txtCodBarra.BackColor = System.Drawing.Color.White
         Me.txtCodBarra.BorderStyle = System.Windows.Forms.BorderStyle.None
         Me.txtCodBarra.Font = New System.Drawing.Font("Verdana", 24.0!, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, CType(0, Byte))
-        Me.txtCodBarra.Location = New System.Drawing.Point(42, 98)
+        Me.txtCodBarra.Location = New System.Drawing.Point(56, 121)
+        Me.txtCodBarra.Margin = New System.Windows.Forms.Padding(4)
         Me.txtCodBarra.MaxLength = 13
         Me.txtCodBarra.Name = "txtCodBarra"
-        Me.txtCodBarra.Size = New System.Drawing.Size(236, 39)
+        Me.txtCodBarra.Size = New System.Drawing.Size(315, 49)
         Me.txtCodBarra.TabIndex = 3
         Me.txtCodBarra.TextAlign = System.Windows.Forms.HorizontalAlignment.Center
         '
@@ -267,15 +266,15 @@ Partial Class frmPdvVenda
         '
         'frmPdvVenda
         '
-        Me.AutoScaleDimensions = New System.Drawing.SizeF(6.0!, 13.0!)
+        Me.AutoScaleDimensions = New System.Drawing.SizeF(8.0!, 16.0!)
         Me.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font
         Me.BackColor = System.Drawing.Color.FromArgb(CType(CType(46, Byte), Integer), CType(CType(46, Byte), Integer), CType(CType(62, Byte), Integer))
-        Me.ClientSize = New System.Drawing.Size(1040, 640)
+        Me.ClientSize = New System.Drawing.Size(1387, 788)
         Me.Controls.Add(Me.SplitContainer1)
         Me.FormBorderStyle = System.Windows.Forms.FormBorderStyle.None
         Me.Icon = CType(resources.GetObject("$this.Icon"), System.Drawing.Icon)
         Me.KeyPreview = True
-        Me.Margin = New System.Windows.Forms.Padding(2, 2, 2, 2)
+        Me.Margin = New System.Windows.Forms.Padding(3, 2, 3, 2)
         Me.Name = "frmPdvVenda"
         Me.StartPosition = System.Windows.Forms.FormStartPosition.CenterParent
         Me.Text = "Venda"
