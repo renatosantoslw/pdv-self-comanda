@@ -129,11 +129,11 @@ Public Class frmPdvVenda
 
             strDadosPortaSerial = String.Empty
 
-            'Tratar_Peso_Normal()
-            Tratar_Loja1()
-            'Tratar_Loja2()
+            'Tratar_Peso_Normal() SÓ PESO POR KG
+            'Tratar_Loja1() 'convenio POR FAIXA - RESTO PESO NORMAL POR KG
+            Tratar_Loja2() 'arena(segundo distrito) e joao eduardo - FAIXAS
         Catch ex As Exception
-            LogApp.GerarLogErro(ex, "frmPdvVenda", "Serial_DataReceived: " + strDadosPortaSerial)
+            ' LogApp.GerarLogErro(ex, "frmPdvVenda", "Serial_DataReceived: " + strDadosPortaSerial)
         End Try
 
 
@@ -588,7 +588,9 @@ Public Class frmPdvVenda
 
     End Sub
 
-    'TRATAMENTO DE PESO PERSONALIZADO POR TIPO DE ITEM
+
+
+    'TRATAMENTO DE PESO PERSONALIZADO POR TIPO DE ITEM - FAIXA SÓ CONVENIO - PESO KG NORMAL
     Sub Tratar_Loja1()
 
 
@@ -1457,6 +1459,8 @@ Public Class frmPdvVenda
 
                 End If
 
+
+
             End If
         Catch ex As Exception
             LogApp.GerarLogErro(ex, "frmPdvVenda", "If intContadorLeitura_Peso = 2 And CType(strDadosPortaSerial_Peso, Decimal) > 00000")
@@ -1545,8 +1549,6 @@ Public Class frmPdvVenda
 
         Try
             If intContadorLeitura_Peso = 4 And CType(strDadosPortaSerial_Peso, Decimal) > "00000" Then
-
-
 
                 If Parametros.strSistemaIntegrado = "Sischef" Then
 
@@ -3712,8 +3714,6 @@ Public Class frmPdvVenda
                     End If
 
                 End If
-
-
 
             End If
 

@@ -936,7 +936,7 @@ Public Class clsFuncoes
                 objCommandPostgres.Parameters.AddWithValue("@identificacao", Convert.ToInt32(strDiaHoraMinuto)) 'Numero comanda             
                 objCommandPostgres.Parameters.AddWithValue("@complemento_identificador", DBNull.Value)
                 objCommandPostgres.Parameters.AddWithValue("@codigo_referencial_pessoa", DBNull.Value)
-                objCommandPostgres.Parameters.AddWithValue("@codigo_referencial", "PDVSELFCOMANDA")
+                objCommandPostgres.Parameters.AddWithValue("@codigo_referencial", CodigoReferencial)
                 objCommandPostgres.Parameters.AddWithValue("@data", DateTime.Now.Date)
                 objCommandPostgres.Parameters.AddWithValue("@cancelado", False)
                 objCommandPostgres.Parameters.AddWithValue("@enviado", False)
@@ -1091,6 +1091,26 @@ Public Class clsFuncoes
             End Try
 
         End Function
+
+        Function CodigoReferencial() As String
+            Dim agora As DateTime = DateTime.Now
+
+            Dim codigo As String = "SISCHEF" &
+            agora.Year.ToString("0000") &
+            agora.Month.ToString("00") &
+            agora.Day.ToString("00") &
+            agora.Hour.ToString("00") &
+            agora.Minute.ToString("00") &
+            agora.Second.ToString("00") &
+            agora.Millisecond.ToString("000000") ' 6 dígitos de milissegundos
+
+            Return codigo
+        End Function
+
+
+
+
+
 
         Function InserirComanda_s(ByVal strCodProduto_p As String,
                                   ByVal strCodEmpresa_p As String,
@@ -1301,6 +1321,8 @@ INSERT INTO Venda_Espera_SelfComanda (
             GC.SuppressFinalize(Me)
         End Sub
 #End Region
+
+
     End Class
 
     Public Class Imprimir
